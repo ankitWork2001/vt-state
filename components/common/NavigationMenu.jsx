@@ -1,9 +1,8 @@
 import React from 'react'
 
 function NavigationMenu() {
-  return (
-    <div>NavigationMenu</div>
-  )
+  return (<>NavigationMenu</> )
 }
 
 export default NavigationMenu
+

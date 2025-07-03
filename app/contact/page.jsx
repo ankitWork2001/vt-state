@@ -10,7 +10,7 @@ const Contact = () => {
     <div className="bg-white">
       <NavigationMenu />
       <ContactBanner />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-[80%] place-self-center">
         <ContactInfo />
         <ContactForm />
       </div>
