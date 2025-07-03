@@ -25,7 +25,7 @@ const HeroBanner = () => {
       </div>
 
       {/* Start Reading button */}
-      <Link href="/start-reading">
+      <Link href="/blog-listings" className="absolute inset-0">
         <div
           className="absolute bg-[#FF914D] text-white flex items-center justify-center rounded-lg cursor-pointer hover:bg-[#e8823d] transition-colors"
           style={{

@@ -48,7 +48,7 @@ export default function FilterTabs({
 
   return (
     <div className="max-w-[1240px] mx-auto px-6 py-4 border-b border-gray-200 relative">
-      <div className="flex gap-6 overflow-x-auto">
+      <div className="flex gap-6 justify-between items-center overflow-x-auto ">
         {categories.map((category) => (
           <button
             key={category.slug}

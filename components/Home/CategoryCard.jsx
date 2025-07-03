@@ -82,7 +82,7 @@ export default function CategoryCard() {
 
       {/* Blog Section Background Change */}
       <div className={`${activeCategory !== "all" ? "bg-[#E9EBF8]" : ""} p-6 rounded-lg rounded-t-none`}>
-        <BlogCard blogs={getFilteredBlogs()} showBorder={true} categoryColor={currentColor} />
+        <BlogCard blogs={getFilteredBlogs()} showBorder={false} categoryColor={currentColor} />
       </div>
     </section>
   )
