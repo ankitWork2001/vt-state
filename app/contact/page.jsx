@@ -10,11 +10,11 @@ const Contact = () => {
     <div className="bg-white">
       <NavigationMenu path={[{ label: "Home", href: "/" }, { label: "Contact" }]} />
       <ContactBanner />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-[80%] place-self-center">
+      <div className="px-10 grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-[90%] place-self-center ">
         <ContactInfo />
         <ContactForm />
       </div>
-      <MapEmbed />
+        <MapEmbed />
     </div>
   );
 };
