@@ -84,7 +84,7 @@ export default function FilterTabs({
               }}
               className={`block w-full px-3 py-2 text-left text-sm transition-colors ${
                 selectedSubCategory === subcategory
-                  ? "bg-blue-50 text-blue-600 font-medium"
+                  ? "bg-blue-50 text-blue-[#1F3C5F] font-medium"
                   : "hover:bg-gray-50 text-gray-700"
               }`}
             >

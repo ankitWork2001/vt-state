@@ -15,7 +15,7 @@ function ContactInfo() {
         </p>
       </div>
 
-      <div className='py-5 block'>
+      <div className='py-5 block'>git 
         <strong className='font-semibold'>Our Location</strong>
         <div>
           <ul>
