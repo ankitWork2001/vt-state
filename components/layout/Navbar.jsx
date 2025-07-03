@@ -10,7 +10,7 @@ const Navbar = () => {
 
       <div className="flex space-x-8 items-center">
         <Link
-          href="/home"
+          href="/"
           className="text-[#1F3C5F] hover:text-[#FF914D] font-medium text-base transition-colors duration-200"
         >
           Home
