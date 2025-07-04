@@ -38,14 +38,14 @@ function ContactInfo() {
       </div>
 
       <div className='py-5 flex gap-4'>
-        <div className='size-13 rounded-lg bg-slate-200 flex items-center justify-center'>
-          <Twitter className='bg-white rounded-full size-8 p-1'/>
+        <div className='size-15 rounded-lg bg-slate-50 flex items-center justify-center'>
+          <Twitter className='bg-white rounded-full size-10 p-1 m-3'/>
         </div>
-        <div className='size-13 rounded-lg bg-slate-200 flex items-center justify-center'>
-          <Facebook className='bg-white rounded-full size-8 p-1'/>
+        <div className='size-15 rounded-lg bg-slate-50 flex items-center justify-center'>
+          <Facebook className='bg-white rounded-full size-10 p-1 m-3'/>
         </div>
-        <div className='size-13 rounded-lg bg-slate-200 flex items-center justify-center'>
-          <Instagram className='bg-white rounded-full size-8 p-1'/>
+        <div className='size-15 rounded-lg bg-slate-50 flex items-center justify-center'>
+          <Instagram className='bg-white rounded-full size-10 p-1 m-3'/>
         </div>
       </div>
     </div>
@@ -105,13 +105,13 @@ export default ContactInfo
 
 
 //       <div className='py-5 flex justify-start'>
-//         <div className='size-20 rounded-lg bg-white text-slate-200'>
+//         <div className='size-20 rounded-lg bg-slate-300 text-white'>
 //           <Twitter/>
 //         </div>
-//         <div className='size-20 rounded-lg bg-white text-slate-200'>
+//         <div className='size-20 rounded-lg bg-slate-300 text-white'>
 //           <Facebook/>
 //         </div>
-//         <div className='size-20 rounded-lg bg-white text-slate-200'>
+//         <div className='size-20 rounded-lg bg-slate-300 text-white'>
 //           <Instagram/>
 //         </div>
 //       </div>
