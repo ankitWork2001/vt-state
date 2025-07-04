@@ -45,7 +45,7 @@ export default function CategoryCard() {
       </div>
 
       {/* Category Cards */}
-      <div className="grid lg:grid-cols-8 sm:grid-cols-4 grid-cols-2 gap-4 ">
+      <div className="grid lg:grid-cols-8 md:grid-cols-6 grid-cols-4 gap-4 ">
         {blogData.categories.map((category) => {
           const active = isActive(category.name)
           const borderColor = active ? categoryColors[category.name.toLowerCase()] : "#e5e7eb"

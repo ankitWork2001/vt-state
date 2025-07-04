@@ -8,7 +8,7 @@ import NewsletterForm from '@/components/Home/NewsletterForm';
 
 const Home = () => {
   return (
-    <div className="bg-white mx-20">
+    <div className="bg-white lg:mx-20 md:mx-10 sm:mx-5 mx-2">
       <HeroBanner />
       <CategoryCard />
       <TrendingBlogs />

@@ -13,14 +13,14 @@ export default function BlogViewControls({ sortBy, onSortChange }) {
   ]
 
   return (
-    <div className="max-w-[1240px] mx-auto px-6 py-4">
-      <div className="flex items-center justify-between">
+    <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4">
+      <div className="flex justify-between items-center  gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-700">Sort:</span>
           <div className="relative">
             <button
               onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className="flex items-center gap-2 px-3 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 min-w-[100px] justify-between"
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 min-w-[120px] justify-between"
             >
               {sortOptions.find((option) => option.value === sortBy)?.label || "Newest"}
               <ChevronDown className="w-4 h-4" />
@@ -43,8 +43,12 @@ export default function BlogViewControls({ sortBy, onSortChange }) {
             )}
           </div>
         </div>
-
-        <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">View All</button>
+         <div className="flex items-center justify-center relative top-1 right-2">
+        <button className="text-sm text-[#000000] hover:text-[#1F3C5F] font-medium self-start sm:self-auto underline ">
+          View All
+        </button>
+         </div>
+          
       </div>
     </div>
   )

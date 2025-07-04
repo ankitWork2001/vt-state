@@ -16,56 +16,49 @@ export default function BlogCard({ blogs, showBorder = true }) {
   const containerClass = showBorder ? "border border-gray-200 rounded-lg p-6 bg-white" : ""
 
   return (
-    <div className={containerClass} >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3   ">
+    <div className={containerClass}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {blogs.map((blog) => (
-         <Card
-  key={blog.id}
-  className="overflow-hidden transition-shadow hover:shadow-lg cursor-pointer rounded-none border border-gray-200"
->
-  <div className="p-5 bg-white">
-   <div className="relative w-full h-48">
-  <Image
-    src={blog.image || "/placeholder.svg"}
-    alt={blog.title}
-    fill
-    className="object-cover"
-  />
+          <Link key={blog.id} href={`/blog-listings/${blog.id}`} passHref>
+            <p className="block">
+              <Card className="overflow-hidden transition-shadow hover:shadow-lg cursor-pointer rounded-none border border-gray-200">
+                <div className="p-5 bg-white">
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={blog.image || "/placeholder.svg"}
+                      alt={blog.title}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <Badge className="bg-white text-green-700 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
+                        #{blog.category.replace(" ", "")}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
 
-  <div className="absolute top-2 left-2">
-    <Badge className="bg-white text-green-700 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-sm">
-      #{blog.category.replace(" ", "")}
-    </Badge>
-  </div>
-</div>
+                <div className="p-5 pt-3">
+                  <h3 className="font-bold text-lg text-gray-900 mb-2 hover:text-[#1F3C5F] line-clamp-2">
+                    {blog.title}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-2">{blog.publishedDate}</p>
 
-  </div>
+                  <p className="text-[#335A8A] text-sm mb-4 line-clamp-3">
+                    {blog.excerpt}
+                    <span className="text-[#335A8A] hover:text-[#1F3C5F] ml-1 font-medium underline">
+                      Read more
+                    </span>
+                  </p>
 
-  <div className="p-5 pt-3">
-    <Link href={`/blog/${blog.id}`}>
-      <h3 className="font-bold text-lg text-gray-900 mb-2 hover:text-[#1F3C5F] line-clamp-2">
-        {blog.title}
-      </h3>
-    </Link>
-
-    <p className="text-xs text-gray-500 mb-2">{blog.publishedDate}</p>
-
-    <p className="text-[#335A8A] text-sm mb-4 line-clamp-3">
-      {blog.excerpt}
-      <Link href={`/blog-listings/${blog.id}`} className="text-[#335A8A] hover:text-[#1F3C5F] ml-1 font-medium underline">
-        Read more
-      </Link>
-    </p>
-
-    <div className="flex items-center justify-between text-sm text-gray-500">
-      <span>By {blog.author}</span>
-      <span>{blog.readTime}</span>
-    </div>
-  </div>
-</Card>
-
-
-
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>By {blog.author}</span>
+                    <span>{blog.readTime}</span>
+                  </div>
+                </div>
+              </Card>
+            </p>
+          </Link>
         ))}
       </div>
     </div>
