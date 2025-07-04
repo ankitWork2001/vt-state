@@ -17,11 +17,13 @@ export default function BlogCard({ blogs, showBorder = true }) {
 
   return (
     <div className={containerClass}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
         {blogs.map((blog) => (
           <Link key={blog.id} href={`/blog-listings/${blog.id}`} passHref>
-            <p className="block">
-              <Card className="overflow-hidden transition-shadow hover:shadow-lg cursor-pointer rounded-none border border-gray-200">
+            <div className="h-full">
+              <Card className="h-full flex flex-col overflow-hidden transition-shadow hover:shadow-lg cursor-pointer rounded-none border border-gray-200">
+                
+                {/* Image Section */}
                 <div className="p-5 bg-white">
                   <div className="relative w-full h-48">
                     <Image
@@ -38,7 +40,8 @@ export default function BlogCard({ blogs, showBorder = true }) {
                   </div>
                 </div>
 
-                <div className="p-5 pt-3">
+                {/* Content Section */}
+                <div className="flex flex-col flex-grow px-5 pt-0 pb-5 bg-white">
                   <h3 className="font-bold text-lg text-gray-900 mb-2 hover:text-[#1F3C5F] line-clamp-2">
                     {blog.title}
                   </h3>
@@ -51,13 +54,14 @@ export default function BlogCard({ blogs, showBorder = true }) {
                     </span>
                   </p>
 
-                  <div className="flex items-center justify-between text-sm text-gray-500">
+                  {/* Footer aligned at bottom */}
+                  <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
                     <span>By {blog.author}</span>
                     <span>{blog.readTime}</span>
                   </div>
                 </div>
               </Card>
-            </p>
+            </div>
           </Link>
         ))}
       </div>
