@@ -28,7 +28,6 @@ export default function FilterTabs({
       (hoveredCategory || activeCategory === targetCategory)
     ) {
       setShowDropdown(true)
-
       // Position dropdown below the target tab
       const targetTabRef = tabRefs.current[targetCategory]
       const containerElement = containerRef.current
@@ -50,6 +49,31 @@ export default function FilterTabs({
       setShowDropdown(false)
     }
   }, [targetCategory, subCategories.length, hoveredCategory, activeCategory])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showDropdown &&
+        containerRef.current &&
+        !containerRef.current.contains(event.target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false)
+        setHoveredCategory(null)
+      }
+    }
+
+    // Add event listeners for both mouse and touch events
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("touchstart", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("touchstart", handleClickOutside)
+    }
+  }, [showDropdown])
 
   const handleMouseEnter = (categorySlug) => {
     const category = categories.find((cat) => cat.slug === categorySlug)
@@ -73,6 +97,12 @@ export default function FilterTabs({
   }
 
   const handleDropdownMouseLeave = () => {
+    setShowDropdown(false)
+    setHoveredCategory(null)
+  }
+
+  const handleSubCategoryClick = (subcategory) => {
+    onSubCategoryChange(selectedSubCategory === subcategory ? "" : subcategory)
     setShowDropdown(false)
     setHoveredCategory(null)
   }
@@ -101,34 +131,41 @@ export default function FilterTabs({
 
       {/* Subcategory Dropdown - Always positioned below */}
       {showDropdown && subCategories.length > 0 && (
-        <div
-          ref={dropdownRef}
-          className="absolute w-48 sm:w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
-          style={{
-            left: `${dropdownPosition.left}px`,
-            top: `${dropdownPosition.top}px`,
-          }}
-          onMouseEnter={handleDropdownMouseEnter}
-          onMouseLeave={handleDropdownMouseLeave}
-        >
-          {subCategories.map((subcategory) => (
-            <button
-              key={subcategory}
-              onClick={() => {
-                onSubCategoryChange(selectedSubCategory === subcategory ? "" : subcategory)
-                setShowDropdown(false)
-                setHoveredCategory(null)
-              }}
-              className={`block w-full px-3 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                selectedSubCategory === subcategory
-                  ? "bg-blue-50 text-[#1F3C5F] font-medium"
-                  : "hover:bg-gray-50 text-gray-700"
-              }`}
-            >
-              {subcategory}
-            </button>
-          ))}
-        </div>
+        <>
+          <div
+            ref={dropdownRef}
+            className="absolute w-48 sm:w-64 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto"
+            style={{
+              left: `${dropdownPosition.left}px`,
+              top: `${dropdownPosition.top}px`,
+            }}
+            onMouseEnter={handleDropdownMouseEnter}
+            onMouseLeave={handleDropdownMouseLeave}
+          >
+            {subCategories.map((subcategory) => (
+              <button
+                key={subcategory}
+                onClick={() => handleSubCategoryClick(subcategory)}
+                className={`block w-full px-3 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                  selectedSubCategory === subcategory
+                    ? "bg-blue-50 text-[#1F3C5F] font-medium"
+                    : "hover:bg-gray-50 text-gray-700"
+                }`}
+              >
+                {subcategory}
+              </button>
+            ))}
+          </div>
+
+          {/* Mobile overlay to close dropdown when clicking outside */}
+          <div
+            className="fixed inset-0 z-40 bg-transparent sm:hidden"
+            onClick={() => {
+              setShowDropdown(false)
+              setHoveredCategory(null)
+            }}
+          />
+        </>
       )}
     </div>
   )

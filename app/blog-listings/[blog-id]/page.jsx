@@ -6,7 +6,6 @@ import AuthorProfile from '@/components/BlogDetails/AuthorProfile';
 import BlogContent from '@/components/BlogDetails/BlogContent';
 import CommentSection from '@/components/BlogDetails/CommentSection';
 import RelatedArticleCard from '@/components/BlogDetails/RelatedArticleCard ';
-import InteractionBar from '@/components/BlogDetails/InteractionBar';
 import NavigationMenu from '@/components/common/NavigationMenu';
 import { useParams } from 'next/navigation';
 
@@ -14,7 +13,7 @@ const BlogDetails = () => {
   const params = useParams();
 
   const heading = 'How to Write a Good Essay in UPSC Mains 2025— Strategy Explained';
-  const date = '| May 8, 2024';
+  const date = ' May 8, 2024';
   
   const profileDetails = {
     image: 'https://a.storyblok.com/f/191576/1200x800/a3640fdc4c/profile_picture_maker_before.webp',
@@ -24,6 +23,7 @@ const BlogDetails = () => {
       like: '30',
       comment: '40',
       share: '3',
+      saved: '40',
     },
   };
 
@@ -66,7 +66,6 @@ Most of the content you write in Essay will come from your GS preparation. Apart
           <BlogHeader heading={heading} date={date} />
           <AuthorProfile profileDetails={profileDetails} />
           <BlogContent blogContent={blogContent} />
-          <InteractionBar />
           <CommentSection />
         </div>
         <div className="w-full sm:w-[30%] mx-auto ">

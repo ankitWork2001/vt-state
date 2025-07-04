@@ -45,7 +45,7 @@ export default function CategoryCard() {
       </div>
 
       {/* Category Cards */}
-      <div className="grid lg:grid-cols-8 md:grid-cols-6 grid-cols-4 gap-4 ">
+      <div className="grid lg:grid-cols-8 md:grid-cols-6 grid-cols-4 sm:gap-2 gap-4 justify-center items-center ">
         {blogData.categories.map((category) => {
           const active = isActive(category.name)
           const borderColor = active ? categoryColors[category.name.toLowerCase()] : "#e5e7eb"
@@ -72,7 +72,7 @@ export default function CategoryCard() {
                   className="object-cover"
                 />
               </div>
-              <p className={`text-sm font-medium ${active ? "text-black font-semibold" : "text-gray-700"}`}>
+              <p className={`text-xs font-medium ${active ? "text-xs-black font-bold" : "text-gray-700"}`}>
                 {category.name}
               </p>
             </div>

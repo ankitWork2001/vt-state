@@ -8,7 +8,7 @@ function BlogContent({blogContent}) {
       alt='#'
       className='p-2 m-2 w-full h-80 sm:h-100 object-cover'
     />
-    <pre className='p-2 m-2 w-full h-full flex text-wrap font-sans '>
+    <pre className='p-2 m-2 w-full h-full flex text-wrap font-sans  text-justify'>
       {blogContent.content}
     </pre>
   </div>

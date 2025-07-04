@@ -5,7 +5,7 @@ import { Instagram } from 'lucide-react';
 
 function ContactInfo() {
   return (
-    <div className='w-full h-auto p-8'>
+    <div className='w-full h-auto lg:p-8 md:p-5 sm:p-3 '>
       <div className='py-5'>
         <h3 className='py-2 text-2xl font-bold'>
           We are always ready to help you and answer your questions
@@ -15,7 +15,7 @@ function ContactInfo() {
         </p>
       </div>
 
-      <div className='py-5 block'>git 
+      <div className='py-5 block'>
         <strong className='font-semibold'>Our Location</strong>
         <div>
           <ul>
@@ -39,13 +39,13 @@ function ContactInfo() {
 
       <div className='py-5 flex gap-4'>
         <div className='size-15 rounded-lg bg-slate-50 flex items-center justify-center'>
-          <Twitter className='bg-white rounded-full size-10 p-1 m-3'/>
+          <Twitter className=' size-10 p-1 m-3'/>
         </div>
         <div className='size-15 rounded-lg bg-slate-50 flex items-center justify-center'>
-          <Facebook className='bg-white rounded-full size-10 p-1 m-3'/>
+          <Facebook className='size-10 p-1 m-3'/>
         </div>
         <div className='size-15 rounded-lg bg-slate-50 flex items-center justify-center'>
-          <Instagram className='bg-white rounded-full size-10 p-1 m-3'/>
+          <Instagram className=' size-10 p-1 m-3'/>
         </div>
       </div>
     </div>

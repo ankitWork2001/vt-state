@@ -21,7 +21,7 @@ function ContactForm() {
   }
 
   return (
-    <div className='w-full h-auto p-10'>
+    <div className='w-full h-auto lg:p-10 sm:p-1'>
       <div className='text-2xl font-bold'>Send us a message</div>
       <form className='space-4' onSubmit={handleSubmit}>
         <label htmlFor='name'></label>
