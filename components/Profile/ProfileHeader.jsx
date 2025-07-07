@@ -109,7 +109,7 @@ const ProfileHeader = ({ loading = false, oldEdit = false, profile = defaultProf
         </div>
 
         {edit && (<div className='flex gap-3 items-center'>
-          <button onClick={handleCancel} className='p-1 mb-2 w-20 rounded-md bg-transparent border-1 border-red-400 text-red-400 hover:text-red-600 transition-all duration-200'>Cancal</button>
+          <button onClick={handleCancel} className='p-1 mb-2 w-20 rounded-md bg-transparent border-1 border-red-400 text-red-400 hover:text-red-600 transition-all duration-200'>Cancel</button>
           <button onClick={handleSave} className='p-1 mb-2 w-20 text-black rounded-md bg-green-400 hover:text-green-600 transition-all duration-200'>Save</button>
         </div>)}
 
