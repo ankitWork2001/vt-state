@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import CategorySkeleton from "./CategorySkeleton"
 
 export default function FilterTabs({
   activeCategory,
@@ -8,6 +9,7 @@ export default function FilterTabs({
   categories,
   selectedSubCategory,
   onSubCategoryChange,
+  loading = false,
 }) {
   const [showDropdown, setShowDropdown] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ left: 0, top: 0 })
@@ -18,7 +20,7 @@ export default function FilterTabs({
 
   // Get subcategories for the hovered or active category
   const targetCategory = hoveredCategory || activeCategory
-  const currentCategory = categories.find((cat) => cat.slug === targetCategory)
+  const currentCategory = categories.find((cat) => cat.id === targetCategory)
   const subCategories = currentCategory?.subcategories || []
 
   useEffect(() => {
@@ -75,10 +77,10 @@ export default function FilterTabs({
     }
   }, [showDropdown])
 
-  const handleMouseEnter = (categorySlug) => {
-    const category = categories.find((cat) => cat.slug === categorySlug)
+  const handleMouseEnter = (categoryId) => {
+    const category = categories.find((cat) => cat.id === categoryId)
     if (category && category.subcategories && category.subcategories.length > 0) {
-      setHoveredCategory(categorySlug)
+      setHoveredCategory(categoryId)
     }
   }
 
@@ -101,25 +103,32 @@ export default function FilterTabs({
     setHoveredCategory(null)
   }
 
-  const handleSubCategoryClick = (subcategory) => {
-    onSubCategoryChange(selectedSubCategory === subcategory ? "" : subcategory)
+  const handleSubCategoryClick = (subcategoryId) => {
+    onSubCategoryChange(selectedSubCategory === subcategoryId ? "" : subcategoryId)
     setShowDropdown(false)
     setHoveredCategory(null)
   }
+
+  if (loading) {
+    return <CategorySkeleton />
+  }
+
+  // Create categories array with "All" option
+  const allCategories = [{ id: "all", name: "All", subcategories: [] }, ...categories]
 
   return (
     <div ref={containerRef} className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4 border-b border-gray-200 relative">
       {/* Category Tabs */}
       <div className="grid lg:grid-cols-8 md:grid-cols-6 sm:grid-cols-4 grid-cols-3 gap-2 sm:gap-4 lg:gap-6 justify-items-center items-center">
-        {categories.map((category) => (
+        {allCategories.map((category) => (
           <button
-            key={category.slug}
-            ref={(el) => (tabRefs.current[category.slug] = el)}
-            onClick={() => onCategoryChange(category.slug)}
-            onMouseEnter={() => handleMouseEnter(category.slug)}
+            key={category.id}
+            ref={(el) => (tabRefs.current[category.id] = el)}
+            onClick={() => onCategoryChange(category.id)}
+            onMouseEnter={() => handleMouseEnter(category.id)}
             onMouseLeave={handleMouseLeave}
             className={`whitespace-nowrap pb-2 px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium transition-colors rounded w-full text-center ${
-              activeCategory === category.slug
+              activeCategory === category.id
                 ? "text-white bg-[#1F3C5F]"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
             }`}
@@ -144,15 +153,15 @@ export default function FilterTabs({
           >
             {subCategories.map((subcategory) => (
               <button
-                key={subcategory}
-                onClick={() => handleSubCategoryClick(subcategory)}
+                key={subcategory.id}
+                onClick={() => handleSubCategoryClick(subcategory.id)}
                 className={`block w-full px-3 py-2 text-left text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                  selectedSubCategory === subcategory
+                  selectedSubCategory === subcategory.id
                     ? "bg-blue-50 text-[#1F3C5F] font-medium"
                     : "hover:bg-gray-50 text-gray-700"
                 }`}
               >
-                {subcategory}
+                {subcategory.name}
               </button>
             ))}
           </div>

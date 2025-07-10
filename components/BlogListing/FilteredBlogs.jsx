@@ -1,8 +1,21 @@
 import { Bookmark } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import BlogSkeleton from "./BlogSkeleton"
 
-export default function FilteredBlogs({ blogs }) {
+export default function FilteredBlogs({ blogs, loading = false }) {
+  if (loading) {
+    return (
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4">
+        <div className="space-y-4">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <BlogSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (blogs.length === 0) {
     return (
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 text-center">
@@ -18,15 +31,15 @@ export default function FilteredBlogs({ blogs }) {
 
   return (
     <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4">
-      <div>
+      <div className="space-y-4">
         {blogs.map((blog) => (
-          <Link key={blog.id} href={`/blog-listings/${blog.id}`} className="block">
+          <Link key={blog.id || blog._id} href={`/blog-listings/${blog.id || blog._id}`} className="block">
             <div className="bg-white border border-black p-4 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Centered Image */}
                 <div className="flex-shrink-0 w-full sm:w-48 flex items-center justify-center">
                   <Image
-                    src={blog.image || "/placeholder.svg"}
+                    src={blog.thumbnail || "/placeholder.svg?height=150&width=200"}
                     alt={blog.title}
                     width={200}
                     height={150}
@@ -51,40 +64,40 @@ export default function FilteredBlogs({ blogs }) {
                   {/* Category */}
                   <div className="mb-3">
                     <span className="inline-block px-2 py-1 text-sm font-medium text-[#35590E] bg-gray-50 rounded">
-                      #{blog.category.replace(/\s+/g, "")}
+                      #{blog.categoryId?.name || "General"}
                     </span>
                   </div>
 
-                  {/* Excerpt */}
+                  {/* content */}
                   <div className="text-[#060606] text-sm sm:text-base mb-3 leading-relaxed">
-                    {blog.excerpt && blog.excerpt.length > 300 ? (
+                    {blog.content || blog.description ? (
                       <>
-                        {truncateText(blog.excerpt, 300)}...{" "}
-                        <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">
-                          Read more
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        {blog.excerpt}{" "}
-                        {blog.excerpt && (
-                          <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">
-                            Read more
-                          </span>
+                        {blog.content && blog.content.length > 300 ? (
+                          <>
+                            {truncateText(blog.content, 300)}...{" "}
+                            <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
+                          </>
+                        ) : (
+                          <>
+                            {blog.content || blog.description}{" "}
+                            <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
+                          </>
                         )}
                       </>
+                    ) : (
+                      <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
                     )}
                   </div>
 
                   {/* Author & Meta */}
                   <div className="flex flex-col">
                     <div>
-                      <span className="text-[#060606] underline">By {blog.author}</span>
+                      <span className="text-[#060606] underline">By {blog.author?.username || "Anonymous"}</span>
                     </div>
                     <div className="flex items-center text-[#060606] mt-2 gap-2">
-                      <span className="font-semibold mr-2">{blog.publishedDate}</span>
+                      <span className="font-semibold mr-2">{new Date(blog.createdAt).toLocaleDateString()}</span>
                       <span>•</span>
-                      <span>{blog.readTime}</span>
+                      <span>{blog.readTime || "5 Min Reading"}</span>
                     </div>
                   </div>
                 </div>

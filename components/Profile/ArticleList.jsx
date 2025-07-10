@@ -73,7 +73,6 @@ export default function ArticleList() {
 
   let visibleArticles = [];
 
-  {
     if (activeTab === 'Liked') {
       visibleArticles = likedArticles;
     } else if (activeTab === 'Bookmarked') {
@@ -81,7 +80,6 @@ export default function ArticleList() {
     } else {
       visibleArticles = showAll ? allArticles : allArticles.slice(0, 3);
     }
-  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
