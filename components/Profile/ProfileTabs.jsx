@@ -30,7 +30,7 @@ const ProfileTabs = ({activeTab, setActiveTab, setShowAll}) => {
   }
 
   return (
-    <div className="w-full px-4 py-8 mx-auto max-w-[70%] border-t border-gray-300 text-center flex flex-col items-center">
+    <div className="w-full px-4 p-8 mx-auto max-w-[70%] border-t border-gray-300 text-center flex flex-col items-center">
       <div className="py-5 flex flex-wrap gap-2 text-sm">
         {['All', 'Liked', 'Bookmarked'].map((tab) => (
           <button

@@ -1,99 +1,73 @@
-'use client';
-import { useState } from 'react';
-import ArticleCard from '@/components/Profile/ArticleCard';
-import EmptyState from './EmptyState';
+"use client"
 
-const dummyArticles = {
-  liked: [
-    {
-      id: 1,
-      title: "How to Stay Motivated During UPSC Preparation",
-      slug: "stay-motivated-upsc-preparation",
-      excerpt: "...",
-      author: "Rajesh Kumar",
-      readTime: "8 Min Reading",
-      publishedDate: "2025-06-20",
-      category: "Motivational",
-      subCategory: "Social Issues",
-      image: "/images/tempImage.jpg",
-      timestamp: new Date("2025-06-20").getTime(),
-    },
-    {
-      id: 2,
-      title: "From Failure to Success: My UPSC Journey",
-      slug: "failure-to-success-upsc-journey",
-      excerpt: "...",
-      author: "Rohit Sharma",
-      readTime: "12 Min Reading",
-      publishedDate: "2025-06-10",
-      category: "Motivational",
-      subCategory: "Social Issues",
-      image: "/images/tempImage.jpg",
-      timestamp: new Date("2025-06-10").getTime(),
-    },
-  ],
-  bookmarked: [
-    {
-      id: 3,
-      title: "Ethics Case Studies for UPSC",
-      slug: "ethics-case-studies-upsc",
-      excerpt: "...",
-      author: "IAS Mentor",
-      readTime: "9 Min Reading",
-      publishedDate: "2025-06-22",
-      category: "Ethics",
-      subCategory: "Integrity",
-      image: "/images/tempImage.jpg",
-      timestamp: new Date("2025-06-22").getTime(),
-    },
-    {
-      id: 4,
-      title: "Current Affairs Analysis",
-      slug: "current-affairs-analysis",
-      excerpt: "...",
-      author: "Prelims Master",
-      readTime: "10 Min Reading",
-      publishedDate: "2025-06-25",
-      category: "Current Affairs",
-      subCategory: "Economy",
-      image: "/images/tempImage.jpg",
-      timestamp: new Date("2025-06-25").getTime(),
-    },
-  ],
-};
+import { useState } from "react"
+import ArticleCard from "./ArticleCard"
+import EmptyState from "./EmptyState"
 
+export default function ArticleList({ likedBlogs = [], savedBlogs = [] }) {
+  const [activeTab, setActiveTab] = useState("All")
+  const [showAll, setShowAll] = useState(false)
 
-export default function ArticleList() {
-  const [activeTab, setActiveTab] = useState('All');
-  const [showAll, setShowAll] = useState(false);
+  // Transform API data to match component structure
+  const transformBlogData = (blogs) => {
+    return blogs.map((blog) => ({
+      id: blog._id,
+      title: blog.title,
+      slug: blog._id,
+      category: blog.categoryId?.name || "General",
+      image: blog.thumbnail || "/placeholder.svg?height=100&width=100",
+      createdAt: blog.createdAt, // Keep the original createdAt for formatting
+    }))
+  }
 
-  const allArticles = [...dummyArticles.liked, ...dummyArticles.bookmarked];
-  const likedArticles = dummyArticles.liked;
-  const bookmarkedArticles = dummyArticles.bookmarked;
+  // Remove duplicates by creating a Map with blog ID as key
+  const getUniqueArticles = (liked, saved) => {
+    const articleMap = new Map()
 
-  let visibleArticles = [];
+    // Add liked articles
+    liked.forEach((article) => {
+      articleMap.set(article.id, article)
+    })
 
-    if (activeTab === 'Liked') {
-      visibleArticles = likedArticles;
-    } else if (activeTab === 'Bookmarked') {
-      visibleArticles = bookmarkedArticles;
-    } else {
-      visibleArticles = showAll ? allArticles : allArticles.slice(0, 3);
-    }
+    // Add saved articles (won't overwrite if already exists)
+    saved.forEach((article) => {
+      if (!articleMap.has(article.id)) {
+        articleMap.set(article.id, article)
+      }
+    })
+
+    return Array.from(articleMap.values())
+  }
+
+  const likedArticles = transformBlogData(likedBlogs)
+  const bookmarkedArticles = transformBlogData(savedBlogs)
+  const allArticles = getUniqueArticles(likedArticles, bookmarkedArticles)
+
+  let visibleArticles = []
+
+  if (activeTab === "Liked") {
+    visibleArticles = likedArticles
+  } else if (activeTab === "Bookmarked") {
+    visibleArticles = bookmarkedArticles
+  } else {
+    visibleArticles = showAll ? allArticles : allArticles.slice(0, 3)
+  }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-
-      <div className="flex gap-4 mb-6">
-        {['All', 'Liked', 'Bookmarked'].map((tab) => (
+    <div className="px-4 sm:px-6 max-w-6xl mx-auto">
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        {["All", "Liked", "Bookmarked"].map((tab) => (
           <button
             key={tab}
             onClick={() => {
-              setActiveTab(tab);
-              setShowAll(false); 
+              setActiveTab(tab)
+              setShowAll(false)
             }}
-            className={`px-4 py-2 border rounded ${
-              activeTab === tab ? 'bg-blue-400 text-white' : 'bg-white text-black'
+            className={`px-4 py-2 border rounded-lg transition-colors text-sm font-medium ${
+              activeTab === tab
+                ? "bg-[#6594CD] text-white border-[#6594CD]"
+                : "bg-white border-[#6594CD] text-[#6594CD] hover:bg-[#6594CD] hover:text-white"
             }`}
           >
             {tab}
@@ -101,26 +75,26 @@ export default function ArticleList() {
         ))}
       </div>
 
+      {/* Articles */}
       <div className="space-y-4">
         {visibleArticles.length === 0 ? (
-          <EmptyState/>
+          <EmptyState />
         ) : (
-          visibleArticles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
-          ))
+          visibleArticles.map((article) => <ArticleCard key={article.id} article={article} />)
         )}
       </div>
 
-      {activeTab === 'All' && !showAll && allArticles.length > 3 && (
-        <div className="text-center mt-6">
+      {/* View All Button */}
+      {activeTab === "All" && !showAll && allArticles.length > 3 && (
+        <div className="text-center mt-8">
           <button
             onClick={() => setShowAll(true)}
-            className="text-blue-600 hover:underline text-sm"
+            className="text-[#6594CD] hover:text-white border border-[#6594CD] hover:bg-[#6594CD] px-6 py-2 rounded-lg text-sm font-medium transition-all"
           >
-            View All
+            View All ({allArticles.length - 3} more)
           </button>
         </div>
       )}
     </div>
-  );
+  )
 }
