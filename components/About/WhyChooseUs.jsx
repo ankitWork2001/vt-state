@@ -44,7 +44,10 @@ export default function WhyChooseUs() {
             key={idx}
             className="w-full max-w-[301px] h-auto sm:h-[191px] border rounded-[8px] border-[#E3E0DB] p-5 bg-white shadow-sm flex flex-col items-start mx-auto"
           >
+            <h1>
+
             {card.icon}
+            </h1>
             <h3 className="font-bold text-[#151515] text-base sm:text-lg leading-5 mb-2 mt-3">
               {card.title}
             </h3>
