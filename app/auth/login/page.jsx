@@ -50,7 +50,7 @@ export default function LoginPage() {
 
         <div className="bg-[#E9EBF8] rounded-lg shadow-md p-8">
           <div>
-            <h2 className="text-center text-lg font-semibold text-gray-900 mb-2">Admin Dashboard Access</h2>
+            <h2 className="text-center text-lg font-semibold text-gray-900 mb-2">User Access</h2>
             <p className="text-center text-sm text-gray-600 mb-6">Login to your account</p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
