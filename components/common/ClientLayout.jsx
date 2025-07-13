@@ -9,8 +9,11 @@ import { Toaster } from 'react-hot-toast'
 export default function ClientLayout({ children }) {
   const pathname = usePathname()
 
-  // Hide layout on auth routes
-  const hideLayout = pathname.startsWith('/auth')
+  // List of routes to hide layout on
+  const hiddenRoutes = ['/auth', '/admin']
+
+  // Check if current path starts with any hidden prefix
+  const hideLayout = hiddenRoutes.some((prefix) => pathname?.startsWith(prefix))
 
   // Responsive toast position
   const [position, setPosition] = useState('bottom-right')
@@ -20,7 +23,7 @@ export default function ClientLayout({ children }) {
       setPosition(window.innerWidth < 640 ? 'top-center' : 'bottom-right')
     }
 
-    handleResize() // set on initial render
+    handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -29,9 +32,7 @@ export default function ClientLayout({ children }) {
     <>
       {!hideLayout && <Navbar />}
 
-      <main className={!hideLayout ? 'pt-20' : ''}>
-        {children}
-      </main>
+      <main className={!hideLayout ? 'pt-20' : ''}>{children}</main>
 
       {!hideLayout && <Footer />}
 
