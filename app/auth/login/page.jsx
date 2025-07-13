@@ -31,7 +31,7 @@ export default function LoginPage() {
         localStorage.setItem("user", JSON.stringify(response.data.user))
 
         toast.success("Login successful! Welcome back.")
-        router.push("/dashboard")
+        router.push("/")
       }
     } catch (error) {
       console.error("Login error:", error)

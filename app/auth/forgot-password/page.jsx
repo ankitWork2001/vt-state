@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
         localStorage.setItem("user", JSON.stringify(loginResponse.data.user))
 
         toast.success("Welcome back! You're now logged in.")
-        router.push("/dashboard")
+        router.push("/")
       }
     } catch (error) {
       console.error("Password reset error:", error)

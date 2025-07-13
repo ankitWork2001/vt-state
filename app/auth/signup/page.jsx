@@ -112,7 +112,7 @@ export default function SignupPage() {
         localStorage.setItem("user", JSON.stringify(loginResponse.data.user))
 
         toast.success("Welcome! You're now logged in.")
-        router.push("/dashboard")
+        router.push("/")
       }
     } catch (error) {
       console.error("Registration error:", error)

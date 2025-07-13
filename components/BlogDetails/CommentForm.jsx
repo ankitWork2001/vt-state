@@ -5,13 +5,12 @@ import { useParams } from 'next/navigation';
 import { axiosInstance } from "@/lib/axios";
 import { toast } from "react-hot-toast";
 
-function CommentForm() {
+function CommentForm({ refetchComments }) {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { 'blog-id': blogId } = useParams(); 
-
+  const { 'blog-id': blogId } = useParams();
 
   useEffect(() => {
     const verifyUser = async () => {
@@ -33,7 +32,6 @@ function CommentForm() {
 
         const serverUser = data.user;
 
-        // Match user ID and check if not admin
         if (localUser.userid === serverUser.userId && !serverUser.isAdmin) {
           setIsValidUser(true);
         } else {
@@ -75,7 +73,9 @@ function CommentForm() {
         }
       );
       toast.success("Comment posted successfully!");
-      setComment(''); 
+      setComment('');
+      console.log('Comment submitted, refetching comments');
+      refetchComments(); // Trigger comment list update
     } catch (err) {
       console.error("Failed to post comment:", err.message);
       toast.error("Failed to post comment. Please try again.");
@@ -98,8 +98,6 @@ function CommentForm() {
 
   return (
     <div className="p-1 m-1 my-3 min-w-fit h-auto w-full flex flex-col justify-start">
-    
-
       <h3 className="p-1 m-1 my-3 text-xl font-semibold border-l-2 border-slate-700 px-2">
         Leave a Comment
       </h3>
