@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { ImageIcon } from 'lucide-react';
 
-const MediaUpload = () => {
+const MediaUpload = ({ mediaFile, onFileSelect }) => {
   const fileInputRef = useRef(null);
 
   const handleMediaClick = () => {
@@ -9,10 +9,12 @@ const MediaUpload = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files[0];
     if (file) {
+      onFileSelect(file);
       console.log('Selected media:', file);
-      // Optionally upload to backend with axios
+    } else {
+      console.log("No file selected");
     }
   };
 
@@ -34,7 +36,7 @@ const MediaUpload = () => {
         className="flex items-center gap-2 text-sm bg-white border px-3 py-2 rounded-md hover:bg-gray-50"
       >
         <ImageIcon size={18} />
-        Add Media
+        {mediaFile ? mediaFile.name : <p>Add Media</p>}
       </button>
     </div>
   );

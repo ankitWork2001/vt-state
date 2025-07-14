@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   Loader2,
 } from "lucide-react";
+import { axiosInstance } from "@/lib/axios";
 
 const initialCategories = [
   {
@@ -42,6 +43,7 @@ const PostForm = () => {
   const { register, handleSubmit, watch, reset } = useForm();
   const [categories, setCategories] = useState(initialCategories);
   const [selectedCategory, setSelectedCategory] = useState("Essay");
+  const [subCategories, setSubCategories] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [newSubcategory, setNewSubcategory] = useState("");
   const [showCatInput, setShowCatInput] = useState(false);
@@ -50,8 +52,12 @@ const PostForm = () => {
   const [previewData, setPreviewData] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const selectedSubcategories =
-    categories.find((c) => c.name === selectedCategory)?.subcategories || [];
+  const token = localStorage.getItem("token");
+
+useEffect(() => {
+  const matchedCategory = categories.find((c) => c.name === selectedCategory);
+  setSubCategories(matchedCategory?.subcategories || []);
+}, [selectedCategory, categories]);
 
   // Load draft from localStorage
   useEffect(() => {
@@ -63,56 +69,163 @@ const PostForm = () => {
     }
   }, [reset]);
 
-  const onSubmit = async (data) => {
-    setLoading(true);
-    try {
-      console.log("Publishing:", data);
-      // await axios.post('/api/posts', data); // example API
-      alert("Post published successfully!");
-    } catch (err) {
-      alert("Failed to publish post.");
-    }
-    setLoading(false);
+  useEffect( ()=>{
+    const fetchCategories = async () => {
+      try {
+        const res = await axiosInstance.get('/categories');
+        console.log(res.data.data);
+        setCategories(res.data.data);
+      } catch (error) {
+        console.error("Failed to fetch categories", error);
+      }
+    };
+  fetchCategories();
+  },[])
+
+  const handlePreview = () => {
+    setPreviewData({ ...watch(), mediaFile });
   };
 
+
+    const onSubmit = async (data) => {
+      setLoading(true);
+      handlePreview();
+
+      try {
+        let uploadedImageUrl = "";
+
+        if (mediaFile) {
+          const formData = new FormData();
+          formData.append("file", mediaFile);
+
+          const uploadRes = await axiosInstance.post("/upload", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          uploadedImageUrl = uploadRes.data?.url || "";
+          console.log("Uploaded Image URL:", uploadedImageUrl);
+        }
+
+        const postPayload = {
+          ...data,
+          image: uploadedImageUrl,
+        };
+
+        const postRes = await axiosInstance.post("/post", postPayload, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        console.log("Post submitted:", postRes.data);
+        alert("Post published successfully!");
+      } catch (error) {
+        console.error("Error publishing post:", error);
+        alert("Failed to publish post.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
   const handleSaveDraft = () => {
+    handlePreview();
     const values = watch();
     localStorage.setItem("postDraft", JSON.stringify(values));
     alert("Draft saved to local storage.");
   };
 
   const handleDelete = () => {
-    reset();
+    reset({
+      title: "",
+      category: "",
+      content: ""
+    });
+    setMediaFile(false);
     localStorage.removeItem("postDraft");
     setPreviewData(null);
     alert("Post deleted.");
   };
 
-  const handlePreview = () => {
-    setPreviewData({ ...watch(), mediaFile });
-  };
-
   const handleAddCategory = () => {
-    if (!newCategory.trim()) return;
-    setCategories([
-      ...categories,
-      { id: Date.now(), name: newCategory, subcategories: [] },
-    ]);
-    setNewCategory("");
-    setShowCatInput(false);
+
+    const addCategory = async () => {
+      if (!newCategory.trim()) return;
+
+      try {
+        const res = await axiosInstance.post("/categories",
+          {
+            name: newCategory,
+            description: `This is ${newCategory}`,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const newCat = res.data?.data;
+
+        setCategories((prev) => [...prev, newCat]);
+        console.log(categories)
+        setNewCategory("");
+        setShowCatInput(false);
+      } catch (error) {
+        console.error("Failed to add category", error);
+      }
+    };
+
+    addCategory();
   };
 
   const handleAddSubcategory = () => {
     if (!newSubcategory.trim()) return;
-    setCategories(
-      categories.map((cat) =>
-        cat.name === selectedCategory
-          ? { ...cat, subcategories: [...cat.subcategories, newSubcategory] }
-          : cat
-      )
-    );
-    setNewSubcategory("");
-    setShowSubInput(false);
+
+    const addSubCategory = async () => {
+      const categoryId = categories.find((c) => c.name === selectedCategory);
+
+      if (!categoryId) {
+        console.error("Selected category not found");
+        return;
+      }
+
+      try {
+        const res = await axiosInstance.post(
+          `/categories/${categoryId.id}/subcategories`,
+          {
+            name: newSubcategory,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const newCatId = res.data?.data;
+
+        setSubCategories((prev) => [...prev, newCatId]);
+        setNewSubcategory("");
+        setShowSubInput(false);
+        setCategories(
+          categories.map((cat) =>
+            cat.name === selectedCategory
+              ? {
+                  ...cat,
+                  subcategories: [...cat.subcategories, newSubcategory],
+                }
+              : cat
+          )
+        );
+      } catch (error) {
+        console.error("Failed to add category", error);
+      }
+    };
+
+    addSubCategory();
   };
 
   return (
@@ -140,7 +253,7 @@ const PostForm = () => {
         />
 
         {/* Media Upload */}
-        <MediaUpload onFileSelect={setMediaFile} />
+        <MediaUpload mediaFile={mediaFile} onFileSelect={setMediaFile} />
 
         {/* Toolbar */}
         <div className="bg-white p-2 flex gap-3 rounded-md mb-4 text-gray-700">
@@ -231,12 +344,12 @@ const PostForm = () => {
             </select>
 
             <div className="flex flex-wrap gap-2 mb-4">
-              {selectedSubcategories.map((sub, i) => (
+              {subCategories.map((sub, i) => (
                 <span
-                  key={i}
+                  key={typeof sub === 'string' ? sub : i}
                   className="border px-3 py-1 text-sm rounded-full bg-gray-100"
                 >
-                  {sub}
+                  {typeof sub === 'string' ? sub : sub.name}
                 </span>
               ))}
             </div>

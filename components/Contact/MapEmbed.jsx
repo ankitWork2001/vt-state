@@ -18,7 +18,7 @@ function MapEmbed() {
           href="https://norsumediagroup.com/embed-google-map-website-free"
           target="_blank"
           rel="noopener noreferrer"
-          className="block text-sm text-center py-1 text-gray-500 no-underline hidden">
+          className="block text-sm text-center py-1 text-gray-500 no-underline">
           Embed Map on Website for Free
         </a>
       </div>
