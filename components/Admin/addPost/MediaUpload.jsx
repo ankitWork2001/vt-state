@@ -11,8 +11,8 @@ const MediaUpload = ({ mediaFile, onFileSelect }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      onFileSelect(file);
-      console.log('Selected media:', file);
+      onFileSelect(file); // ✅ Set selected file
+      console.log('Selected media:', file); // ✅ Log the correct file
     } else {
       console.log("No file selected");
     }
@@ -36,7 +36,7 @@ const MediaUpload = ({ mediaFile, onFileSelect }) => {
         className="flex items-center gap-2 text-sm bg-white border px-3 py-2 rounded-md hover:bg-gray-50"
       >
         <ImageIcon size={18} />
-        {mediaFile ? mediaFile.name : <p>Add Media</p>}
+        {mediaFile ? mediaFile.name : <span>Add Media</span>}
       </button>
     </div>
   );
