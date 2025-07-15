@@ -1,14 +1,19 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import BlogHeader from '@/components/BlogDetails/BlogHeader';
 import AuthorProfile from '@/components/BlogDetails/AuthorProfile';
 import BlogContent from '@/components/BlogDetails/BlogContent';
 import CommentSection from '@/components/BlogDetails/CommentSection';
- import RelatedArticleCard from '@/components/BlogDetails/RelatedArticleCard ';
+import RelatedArticleCard from '@/components/BlogDetails/RelatedArticleCard ';
 import NavigationMenu from '@/components/common/NavigationMenu';
 import { useParams } from 'next/navigation';
 import { axiosInstance } from '@/lib/axios';
+
+// Generate a unique sessionId
+const generateSessionId = () => {
+  return 'session_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+};
 
 const BlogDetails = () => {
   const params = useParams();
@@ -17,6 +22,14 @@ const BlogDetails = () => {
   const [blogDetails, setBlogDetails] = useState(null);
   const [commentsDetails, setCommentsDetails] = useState(null);
   const [error, setError] = useState('');
+
+  // Track visit state
+  const visitIdRef = useRef(null);
+  const startTimeRef = useRef(null);
+  const activeDurationRef = useRef(0);
+  const lastActiveRef = useRef(null);
+  const inactivityTimerRef = useRef(null);
+  const isActiveRef = useRef(true);
 
   const fetchBlog = async () => {
     try {
@@ -69,6 +82,125 @@ const BlogDetails = () => {
     }
   };
 
+  // Track page visit
+  useEffect(() => {
+    if (!slug) return;
+
+    // Generate or retrieve sessionId
+    let sessionId = localStorage.getItem('sessionId');
+    if (!sessionId) {
+      sessionId = generateSessionId();
+      localStorage.setItem('sessionId', sessionId);
+      console.log('Generated new sessionId:', sessionId);
+    } else {
+      console.log('Using existing sessionId:', sessionId);
+    }
+
+    const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const userId = localUser.userid || null;
+
+    const INACTIVITY_TIMEOUT = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    const startVisit = async () => {
+      try {
+        const res = await axiosInstance.post('/analytics/visit/start', {
+          sessionId,
+          page: `/blog/${slug}`,
+          articleId: slug,
+          userId,
+          deviceInfo: navigator.userAgent,
+        });
+        visitIdRef.current = res.data.data.id;
+        startTimeRef.current = Date.now();
+        lastActiveRef.current = Date.now();
+        isActiveRef.current = true;
+        console.log('Visit started:', { sessionId, articleId: slug, userId, visitId: res.data.data.id });
+      } catch (err) {
+        console.error('Start visit error:', err.message);
+      }
+    };
+
+    const endVisit = async () => {
+      if (!visitIdRef.current || !isActiveRef.current) return;
+
+      try {
+        const currentTime = Date.now();
+        const duration = (currentTime - startTimeRef.current) / 1000; // Duration in seconds
+        await axiosInstance.post('/analytics/visit/end', {
+          sessionId,
+          articleId: slug,
+          duration, // Send active duration
+        });
+        console.log('Visit ended:', { sessionId, articleId: slug, duration });
+        visitIdRef.current = null;
+        isActiveRef.current = false;
+        activeDurationRef.current = 0;
+      } catch (err) {
+        console.error('End visit error:', err.message);
+      }
+    };
+
+    // Handle visibility change
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        if (!isActiveRef.current && visitIdRef.current) {
+          // Resume tracking
+          isActiveRef.current = true;
+          lastActiveRef.current = Date.now();
+          console.log('Tab visible, resuming visit:', { sessionId, articleId: slug });
+        }
+      } else {
+        // Tab hidden, end visit
+        if (isActiveRef.current) {
+          activeDurationRef.current += (Date.now() - lastActiveRef.current) / 1000;
+          endVisit();
+          console.log('Tab hidden, visit ended:', { sessionId, articleId: slug, activeDuration: activeDurationRef.current });
+        }
+      }
+    };
+
+    // Handle inactivity
+    const resetInactivityTimer = () => {
+      lastActiveRef.current = Date.now();
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      inactivityTimerRef.current = setTimeout(() => {
+        if (isActiveRef.current) {
+          activeDurationRef.current += (Date.now() - lastActiveRef.current) / 1000;
+          endVisit();
+          console.log('Inactivity timeout, visit ended:', { sessionId, articleId: slug, activeDuration: activeDurationRef.current });
+        }
+      }, INACTIVITY_TIMEOUT);
+    };
+
+    // Start visit
+    startVisit();
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', endVisit);
+    ['mousemove', 'keydown', 'scroll', 'click'].forEach(event => {
+      window.addEventListener(event, resetInactivityTimer);
+    });
+
+    // Initialize inactivity timer
+    resetInactivityTimer();
+
+    // Cleanup
+    return () => {
+      endVisit();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', endVisit);
+      ['mousemove', 'keydown', 'scroll', 'click'].forEach(event => {
+        window.removeEventListener(event, resetInactivityTimer);
+      });
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+    };
+  }, [slug]);
+
   useEffect(() => {
     fetchBlog();
     fetchComments();
@@ -90,7 +222,6 @@ const BlogDetails = () => {
       <div className="mx-auto flex w-[95%] flex-col sm:flex-row">
         <div className="p-1 mx-auto w-full max-w-4xl flex flex-col gap-4">
           <BlogHeader title={blogDetails?.title} date={blogDetails?.updatedAt} />
-
           <AuthorProfile
             author={blogDetails?.author}
             comments={commentsDetails?.total || 0}
@@ -99,9 +230,7 @@ const BlogDetails = () => {
             likedByUser={blogDetails?.likedByUser || false}
             bookmarkedByUser={blogDetails?.bookmarkedByUser || false}
           />
-
           <BlogContent content={blogDetails?.content} thumbnail={blogDetails?.thumbnail} />
-
           <CommentSection commentsDetails={commentsDetails} refetchComments={fetchComments} />
         </div>
         <div className="w-full sm:w-[30%] mx-auto">

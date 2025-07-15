@@ -1,20 +1,18 @@
-import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+"use client"
+import { Pencil, Trash2 } from "lucide-react"
 
 const RecentPosts = ({ posts = [] }) => {
   const handleEdit = (id) => {
-    console.log(`Edit post with ID: ${id}`);
-  };
+    alert(`Update button is pressed for the blogid: ${id}`)
+  }
 
   const handleDelete = (id) => {
-    console.log(`Delete post with ID: ${id}`);
-  };
+    alert(`Delete button is pressed for the blogid: ${id}`)
+  }
 
   return (
     <div className="bg-white shadow-md rounded-md overflow-hidden mt-6 w-full">
-      <h2 className="text-2xl font-semibold text-[#1F3C5F] bg-[#EDF0FB] px-4 py-3">
-        Recent Posts
-      </h2>
+      <h2 className="text-2xl font-semibold text-[#1F3C5F] bg-[#EDF0FB] px-4 py-3">Recent Posts</h2>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-left">
@@ -30,26 +28,17 @@ const RecentPosts = ({ posts = [] }) => {
 
           <tbody className="text-gray-800">
             {posts.map((post, index) => (
-              <tr
-                key={post.id}
-                className={`border-b border-gray-200 hover:bg-gray-50 text-[16px] sm:text-[18px]`}
-              >
+              <tr key={post.id} className={`border-b border-gray-200 hover:bg-gray-50 text-[16px] sm:text-[18px]`}>
                 <td className="px-4 py-4">{post.title}</td>
                 <td className="px-4 py-4">{post.category}</td>
                 <td className="px-4 py-4">{post.date}</td>
                 <td className="px-4 py-4">{post.views}</td>
                 <td className="px-4 py-4">
                   <div className="flex space-x-4">
-                    <button
-                      onClick={() => handleEdit(post.id)}
-                      className="text-green-600 hover:text-green-800"
-                    >
+                    <button onClick={() => handleEdit(post.id)} className="text-green-600 hover:text-green-800">
                       <Pencil size={18} />
                     </button>
-                    <button
-                      onClick={() => handleDelete(post.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
+                    <button onClick={() => handleDelete(post.id)} className="text-red-600 hover:text-red-800">
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -59,14 +48,10 @@ const RecentPosts = ({ posts = [] }) => {
           </tbody>
         </table>
 
-        {posts.length === 0 && (
-          <div className="p-4 text-center text-gray-500">
-            No recent posts available.
-          </div>
-        )}
+        {posts.length === 0 && <div className="p-4 text-center text-gray-500">No recent posts available.</div>}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default RecentPosts;
+export default RecentPosts
