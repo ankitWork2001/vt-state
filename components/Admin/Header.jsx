@@ -1,10 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
-import { Menu, UserCircle2 } from "lucide-react"
+import { Menu, UserCircle2, LogOut } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
-
 const Header = ({ onMenuClick }) => {
   const [userData, setUserData] = useState(null)
   const router = useRouter()
@@ -37,12 +36,14 @@ const Header = ({ onMenuClick }) => {
         <Menu size={24} className="text-[#1F3C5F]" />
       </button>
 
-      {/* User Avatar and Name - Now always visible */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          {/* Removed 'hidden sm:flex' to make it always visible */}
-          <div className="flex items-center gap-2 relative cursor-pointer">
-            <Avatar className="w-14 h-14 border-2 border-[#1F3C5F]">
+      {/* User Profile - Now visible on all screen sizes */}
+      <div className="flex items-center gap-2 ml-auto">
+        {" "}
+        {/* Use ml-auto to push to right */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-2 cursor-pointer">
+              <Avatar className="w-14 h-14 border-2 border-[#1F3C5F]">
               {userData?.profilePic ? (
                 <AvatarImage src={userData.profilePic || "/placeholder.svg"} alt={userData.username || "User"} />
               ) : (
@@ -51,15 +52,17 @@ const Header = ({ onMenuClick }) => {
                 </AvatarFallback>
               )}
             </Avatar>
-            <span className="text-sm font-medium text-[#1F3C5F]">{userData?.username || "Admin"}</span>
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-            Sign Out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+              {/* Display "Admin 322" or dynamic username if available */}
+              <span className="text-sm font-medium text-[#1F3C5F]">{userData?.username || "Admin"}</span>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer flex items-center gap-2">
+              <LogOut size={16} /> Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   )
 }
