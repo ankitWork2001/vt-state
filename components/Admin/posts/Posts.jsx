@@ -6,7 +6,7 @@ import Papa from "papaparse";
 import PostDetails from "./PostDetail";
 import NavigationMenu from "@/components/common/NavigationMenu";
 import { axiosInstance } from "@/lib/axios";
-import { Circles } from "react-loader-spinner";
+import { ClipLoader } from "react-spinners";
 import EditBlogForm from "./EditBlogForm";
 
 const Posts = () => {
@@ -124,11 +124,12 @@ const Posts = () => {
         </select>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center mt-10 h-screen">
-          <Circles height="80" width="80" color="#1F3C5F" ariaLabel="loading" />
+            {loading ? (
+        <div className="flex justify-center items-center h-60">
+          <ClipLoader size={60} color="#1F3C5F" loading={true} />
         </div>
       ) : (
+
         <>
           <div className="w-full overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full text-sm">
