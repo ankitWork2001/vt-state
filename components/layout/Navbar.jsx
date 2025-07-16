@@ -73,6 +73,7 @@ export default function Navbar() {
     localStorage.removeItem("token")
     setUser(null)
     setIsProfileMenuOpen(false)
+    toggleMenu();
     toast.success("Signed out successfully")
     
     // Dispatch custom event to notify other components
@@ -86,13 +87,14 @@ export default function Navbar() {
 
   const handleProfile = () => {
     setIsProfileMenuOpen(false)
+    toggleMenu();
     router.push("/profile")
   }
 
-  const handleSettings = () => {
-    setIsProfileMenuOpen(false)
-    router.push("/settings")
-  }
+  // const handleSettings = () => {
+  //   setIsProfileMenuOpen(false)
+  //   router.push("/settings")
+  // }
 
   return (
     <nav className="bg-white px-4 sm:px-8 lg:px-20 py-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 shadow-sm border-b border-gray-100 h-[70px] sm:h-[80px]">
@@ -170,13 +172,13 @@ export default function Navbar() {
                   Profile
                 </button>
 
-                <button
+                {/* <button
                   onClick={handleSettings}
                   className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
-                </button>
+                </button> */}
 
                 <hr className="my-1" />
 
@@ -272,13 +274,13 @@ export default function Navbar() {
                   Profile
                 </button>
 
-                <button
+                {/* <button
                   onClick={handleSettings}
                   className="w-full flex items-center px-2 py-3 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   Settings
-                </button>
+                </button> */}
 
                 <button
                   onClick={handleSignOut}
