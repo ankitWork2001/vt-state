@@ -34,7 +34,7 @@ const AdminPanel = ({ onSelect, activeKey, isOpen, setIsOpen }) => {
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-6">
           <div className="w-[75px] h-[57px] rounded-xl bg-[#A6C2E5] flex items-center justify-center">
-            <Image src="/placeholder.svg?height=60&width=30" alt="Admin Logo" width={60} height={30} />
+            <Image src="/admin.png" alt="Admin Logo" width={60} height={30} />
           </div>
           <span className="text-[18px] font-bold text-[#171412] hidden sm:block">Mindful Path</span>
         </div>

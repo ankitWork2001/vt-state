@@ -53,7 +53,7 @@ const Header = ({ onMenuClick }) => {
               )}
             </Avatar>
               {/* Display "Admin 322" or dynamic username if available */}
-              <span className="text-sm font-medium text-[#1F3C5F]">{userData?.username || "Admin"}</span>
+              <span className="text-sm font-medium text-[#1F3C5F] hidden sm:block">{userData?.username || "Admin"}</span>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

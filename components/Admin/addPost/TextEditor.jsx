@@ -1,20 +1,26 @@
-'use client';
+"use client"
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import TextStyle from '@tiptap/extension-text-style';
-import { Extension } from '@tiptap/core';
+import { useEditor, EditorContent } from "@tiptap/react"
+import StarterKit from "@tiptap/starter-kit"
+import Underline from "@tiptap/extension-underline"
+import TextStyle from "@tiptap/extension-text-style"
+import Link from "@tiptap/extension-link"
+import Highlight from "@tiptap/extension-highlight"
+import { Extension } from "@tiptap/core"
+import { FaBold, FaItalic, FaUnderline, FaListUl, FaListOl, FaLink } from "react-icons/fa"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { useState, useCallback, useEffect } from "react" // Import useEffect
 
 const FontSize = Extension.create({
-  name: 'fontSize',
-
+  name: "fontSize",
   addOptions() {
     return {
-      types: ['textStyle'],
-    };
+      types: ["textStyle"],
+    }
   },
-
   addGlobalAttributes() {
     return [
       {
@@ -22,281 +28,267 @@ const FontSize = Extension.create({
         attributes: {
           fontSize: {
             default: null,
-            parseHTML: (element) => element.style.fontSize?.replace(/['"]+/g, ''),
+            parseHTML: (element) => element.style.fontSize?.replace(/['"]+/g, ""),
             renderHTML: (attributes) => {
-              if (!attributes.fontSize) return {};
+              if (!attributes.fontSize) return {}
               return {
                 style: `font-size: ${attributes.fontSize}`,
-              };
+              }
             },
           },
         },
       },
-    ];
+    ]
   },
-
   addCommands() {
     return {
       setFontSize:
         (size) =>
         ({ chain }) => {
-          return chain().setMark('textStyle', { fontSize: size }).run();
+          return chain().setMark("textStyle", { fontSize: size }).run()
         },
-    };
+    }
   },
-});
-
-export default function TextEditor({ onChange }) {
-const editor = useEditor({
-  extensions: [
-    StarterKit,
-    Underline,
-    TextStyle,
-    FontSize,
-  ],
-  content: '<p>Hello world!</p>',
-  editorProps: {
-    attributes: {
-      class: 'min-h-[200px] border p-4 rounded focus:outline-none',
-    },
-  },
-  onUpdate: ({ editor }) => {
-    onChange?.(editor.getHTML());
-  },
-  immediatelyRender: false,
 })
 
-  if (!editor) return null;
+export default function TextEditor({ onChange, initialContent = "<p>Hello world!</p>" }) {
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState("")
+  const [editorStateKey, setEditorStateKey] = useState(0) // New state to force re-render
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: { HTMLAttributes: { class: "list-disc pl-6" } },
+        orderedList: { HTMLAttributes: { class: "list-decimal pl-6" } },
+      }),
+      Underline,
+      TextStyle,
+      FontSize,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: "text-blue-600 underline cursor-pointer" },
+      }),
+      Highlight.configure({
+        multicolor: true,
+      }),
+      // Removed Color and BackgroundColor extensions
+    ],
+    content: initialContent,
+    editorProps: {
+      attributes: {
+        class: "min-h-[200px] border p-4 rounded focus:outline-none prose max-w-none",
+      },
+    },
+    onUpdate: ({ editor }) => {
+      onChange?.(editor.getHTML())
+      // Also update the key on content change to ensure active states are correct
+      setEditorStateKey((prev) => prev + 1)
+    },
+    immediatelyRender: false,
+  })
+
+  // Effect to force re-render on selection changes
+  useEffect(() => {
+    if (!editor) return
+
+    const handleSelectionUpdate = () => {
+      setEditorStateKey((prev) => prev + 1)
+    }
+
+    editor.on("selectionUpdate", handleSelectionUpdate)
+
+    return () => {
+      editor.off("selectionUpdate", handleSelectionUpdate)
+    }
+  }, [editor])
+
+  // Effect to update editor content when initialContent prop changes
+  useEffect(() => {
+    if (editor && initialContent !== editor.getHTML()) {
+      editor.commands.setContent(initialContent, false) // false to prevent dispatching a transaction if content is already the same
+    }
+  }, [editor, initialContent])
+
+  const handleLinkButtonClick = useCallback(() => {
+    const currentLink = editor?.getAttributes("link").href || ""
+    setLinkUrl(currentLink)
+    setIsLinkDialogOpen(true)
+  }, [editor])
+
+  const applyLink = useCallback(() => {
+    if (editor) {
+      if (linkUrl) {
+        editor.chain().focus().extendMarkRange("link").setLink({ href: linkUrl }).run()
+      } else {
+        editor.chain().focus().extendMarkRange("link").unsetLink().run()
+      }
+      setIsLinkDialogOpen(false)
+      setEditorStateKey((prev) => prev + 1) // Force re-render after link action
+    }
+  }, [editor, linkUrl])
+
+  const removeLink = useCallback(() => {
+    if (editor) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run()
+      setIsLinkDialogOpen(false)
+      setEditorStateKey((prev) => prev + 1) // Force re-render after link action
+    }
+  }, [editor])
+
+  if (!editor) return null
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-2">
-        <button
+    <div className="space-y-2">
+      {/* Add editorStateKey to force re-render of the button group */}
+      <div className="flex items-center gap-2 mb-2 flex-wrap" key={editorStateKey}>
+        <Button
           type="button"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'font-bold bg-gray-200 px-2' : 'px-2'}
+          onClick={() => {
+            editor.chain().focus().toggleBold().run()
+            setEditorStateKey((prev) => prev + 1) // Force re-render
+          }}
+          variant="ghost"
+          size="icon"
+          data-active={editor.isActive("bold") ? "true" : "false"}
+          className="data-[active=true]:bg-blue-200 data-[active=true]:text-blue-800"
+          title="Bold"
         >
-          B
-        </button>
-        <button
+          <FaBold />
+        </Button>
+        <Button
           type="button"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'italic bg-gray-200 px-2' : 'px-2'}
+          onClick={() => {
+            editor.chain().focus().toggleItalic().run()
+            setEditorStateKey((prev) => prev + 1) // Force re-render
+          }}
+          variant="ghost"
+          size="icon"
+          data-active={editor.isActive("italic") ? "true" : "false"}
+          className="data-[active=true]:bg-blue-200 data-[active=true]:text-blue-800"
+          title="Italic"
         >
-          <i>I</i>
-        </button>
-        <button
+          <FaItalic />
+        </Button>
+        <Button
           type="button"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={editor.isActive('underline') ? 'underline bg-gray-200 px-2' : 'px-2'}
+          onClick={() => {
+            editor.chain().focus().toggleUnderline().run()
+            setEditorStateKey((prev) => prev + 1) // Force re-render
+          }}
+          variant="ghost"
+          size="icon"
+          data-active={editor.isActive("underline") ? "true" : "false"}
+          className="data-[active=true]:bg-blue-200 data-[active=true]:text-blue-800"
+          title="Underline"
         >
-          U
-        </button>
-
+          <FaUnderline />
+        </Button>
+        <Button
+          type="button"
+          onClick={() => {
+            editor.chain().focus().toggleBulletList().run()
+            setEditorStateKey((prev) => prev + 1) // Force re-render
+          }}
+          variant="ghost"
+          size="icon"
+          data-active={editor.isActive("bulletList") ? "true" : "false"}
+          className="data-[active=true]:bg-blue-200 data-[active=true]:text-blue-800"
+          title="Bullet List"
+        >
+          <FaListUl />
+        </Button>
+        <Button
+          type="button"
+          onClick={() => {
+            editor.chain().focus().toggleOrderedList().run()
+            setEditorStateKey((prev) => prev + 1) // Force re-render
+          }}
+          variant="ghost"
+          size="icon"
+          data-active={editor.isActive("orderedList") ? "true" : "false"}
+          className="data-[active=true]:bg-blue-200 data-[active=true]:text-blue-800"
+          title="Numbered List"
+        >
+          <FaListOl />
+        </Button>
+        <Button
+          type="button"
+          onClick={handleLinkButtonClick}
+          variant="ghost"
+          size="icon"
+          data-active={editor.isActive("link") ? "true" : "false"}
+          className="data-[active=true]:bg-blue-200 data-[active=true]:text-blue-800"
+          title="Link"
+        >
+          <FaLink />
+        </Button>
         <select
           onChange={(e) => editor.chain().focus().setFontSize(e.target.value).run()}
           defaultValue=""
-          className="border px-2"
+          className="border px-2 py-1 rounded text-sm h-9"
+          title="Font Size"
         >
           <option value="">Font Size</option>
-          <option value="12px">12</option>
-          <option value="14px">14</option>
-          <option value="16px">16</option>
-          <option value="20px">20</option>
-          <option value="24px">24</option>
+          <option value="12px">12px</option>
+          <option value="14px">14px</option>
+          <option value="16px">16px</option>
+          <option value="20px">20px</option>
+          <option value="24px">24px</option>
         </select>
-
-        <button
-          type="button"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-gray-200 px-2' : 'px-2'}
+        <select
+          onChange={(e) => {
+            if (e.target.value === "") {
+              editor.chain().focus().unsetHighlight().run()
+            } else {
+              editor.chain().focus().setHighlight({ color: e.target.value }).run()
+            }
+          }}
+          defaultValue=""
+          className="border px-2 py-1 rounded text-sm h-9"
+          title="Highlight Color"
         >
-          • List
-        </button>
+          <option value="">Highlight Color</option>
+          <option value="#ffeb3b">Yellow</option>
+          <option value="#b2ebf2">Cyan</option>
+          <option value="#c8e6c9">Green</option>
+          <option value="#ffcdd2">Red</option>
+          <option value="#d1c4e9">Purple</option>
+          <option value="">None</option>
+        </select>
+        {/* Removed Text Color select */}
       </div>
-
       <EditorContent editor={editor} />
+
+      <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Link</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="url" className="text-right">
+                URL
+              </Label>
+              <Input
+                id="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                className="col-span-3"
+                placeholder="https://example.com"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={removeLink}>
+              Remove Link
+            </Button>
+            <Button type="button" onClick={applyLink}>
+              Set Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 'use client';
-
-// import { useEditor, EditorContent } from '@tiptap/react';
-// import StarterKit from '@tiptap/starter-kit';
-// import Underline from '@tiptap/extension-underline';
-// import TextStyle from '@tiptap/extension-text-style';
-// import { Extension } from '@tiptap/core';
-
-// const FontSize = Extension.create({
-//   name: 'fontSize',
-
-//   addOptions() {
-//     return {
-//       types: ['textStyle'],
-//     };
-//   },
-
-//   addGlobalAttributes() {
-//     return [
-//       {
-//         types: this.options.types,
-//         attributes: {
-//           fontSize: {
-//             default: null,
-//             parseHTML: (element) => element.style.fontSize?.replace(/['"]+/g, ''),
-//             renderHTML: (attributes) => {
-//               if (!attributes.fontSize) return {};
-//               return {
-//                 style: `font-size: ${attributes.fontSize}`,
-//               };
-//             },
-//           },
-//         },
-//       },
-//     ];
-//   },
-
-//   addCommands() {
-//     return {
-//       setFontSize:
-//         (size) =>
-//         ({ chain }) => {
-//           return chain().setMark('textStyle', { fontSize: size }).run();
-//         },
-//     };
-//   },
-// });
-
-
-// export default function TextEditor({ onChange }) {
-//   const editor = useEditor({
-//   extensions: [
-//     StarterKit,
-//     Underline,
-//     TextStyle,
-//     FontSize
-//   ],
-//     content: '<p>Hello world!</p>',
-//     immediatelyRender: false,
-//     editorProps: {
-//       attributes: {
-//         class: 'min-h-[200px] border p-4 rounded focus:outline-none',
-//       },
-//     },
-//     onUpdate({ editor }) {
-//       onChange(editor.getHTML()); // Call parent on every update
-//     },
-//   });
-
-//   if (!editor) return null;
-
-//   return (
-//     <div>
-//       {/* Toolbar */}
-//       <div className="flex items-center gap-2 mb-2">
-//         <button type="button" onClick={() => editor.chain().focus().toggleBold().run()}
-//                 className={editor.isActive('bold') ? 'font-bold bg-gray-200 px-2' : 'px-2'}>
-//           B
-//         </button>
-//         <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()}
-//                 className={editor.isActive('italic') ? 'italic bg-gray-200 px-2' : 'px-2'}>
-//           <i>I</i>
-//         </button>
-//         <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()}
-//                 className={editor.isActive('underline') ? 'underline bg-gray-200 px-2' : 'px-2'}>
-//           U
-//         </button>
-//         <select
-//         onChange={(e) =>
-//             editor.chain().focus().setFontSize(e.target.value).run()
-//         }
-//         defaultValue=""
-//         className="border px-2"
-//         >
-//           <option value="">Font Size</option>
-//           <option value="12px">12</option>
-//           <option value="14px">14</option>
-//           <option value="16px">16</option>
-//           <option value="20px">20</option>
-//           <option value="24px">24</option>
-//         </select>
-
-//         {/* ✅ Bullet List Button */}
-//         <button
-//           onClick={() => editor.chain().focus().toggleBulletList().run()}
-//           className={
-//             editor.isActive('bulletList')
-//               ? 'bg-gray-200 px-2'
-//               : 'px-2'
-//           }
-//         >
-//           • List
-//         </button>
-//       </div>
-
-//       {/* Editor Content */}
-//       <EditorContent editor={editor} />
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-// 'use client';
-
-// import { useEditor, EditorContent } from '@tiptap/react';
-// import StarterKit from '@tiptap/starter-kit';
-// import { useEffect, useState } from 'react';
-
-// export default function TextEditor() {
-//   const [output, setOutput] = useState('');
-
-//   const editor = useEditor({
-//     extensions: [StarterKit],
-//     content: '<p>Hello World!</p>',
-//     immediatelyRender: false, 
-//     onUpdate({ editor }) {
-//       setOutput(editor.getHTML());
-//     },
-//   });
-
-//   return (
-//     <div>
-//       <h2 className="text-lg font-semibold mb-2">TipTap Editor</h2>
-//       <div className="border p-2 rounded mb-4">
-//         <EditorContent editor={editor} />
-//       </div>
-
-//       <h3 className="font-medium mb-1">Output HTML:</h3>
-//       <div className="p-2 border bg-gray-100 rounded">
-//         <pre className="text-sm whitespace-pre-wrap">{output}</pre>
-//       </div>
-//     </div>
-//   );
-// }
