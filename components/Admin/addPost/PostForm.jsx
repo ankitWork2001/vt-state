@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { axiosInstance } from "@/lib/axios"
 import MediaUpload from "@/components/Admin/addPost/MediaUpload"
-import NavigationMenu from "@/components/common/NavigationMenu"
 import { Eye, Lock, Clock, PlusCircle } from "lucide-react"
 import { ClipLoader } from "react-spinners"
 import TextEditor from "@/components/Admin/addPost/TextEditor"
@@ -13,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { XCircle } from "lucide-react"
-import DraftsList from "@/components/Admin/addPost/DraftsList" // Import the new component
+import DraftsList from "@/components/Admin/addPost/DraftsList"
 import toast from "react-hot-toast"
 
 const isContentEmpty = (htmlContent) => {
@@ -22,7 +21,7 @@ const isContentEmpty = (htmlContent) => {
   return div.textContent.trim().length === 0
 }
 
-const PostForm = () => {
+const PostForm = ({ postId = null, onPostSuccess = () => {}, onCancelEdit = () => {}, setActiveTab }) => {
   const {
     register,
     handleSubmit,
@@ -34,7 +33,7 @@ const PostForm = () => {
     formState: { errors },
   } = useForm()
   const [categories, setCategories] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState("686e112f2f12f405927ec78c")
+  const [selectedCategory, setSelectedCategory] = useState("")
   const [subCategories, setSubCategories] = useState([])
   const [selectedSubCategory, setSelectedSubCategory] = useState(null)
   const [tags, setTags] = useState([])
@@ -44,23 +43,17 @@ const PostForm = () => {
   const [showCatInput, setShowCatInput] = useState(false)
   const [showSubInput, setShowSubInput] = useState(false)
   const [mediaFile, setMediaFile] = useState(null)
-  const [thumbnailError, setThumbnailError] = useState(false) // New state for thumbnail validation
+  const [thumbnailError, setThumbnailError] = useState(false)
   const [previewData, setPreviewData] = useState(null)
-  const [loading, setLoading] = useState(false) // For Publish button
-  const [savingDraft, setSavingDraft] = useState(false) // For Save Draft button
-  const [showDraftsList, setShowDraftsList] = useState(false) // To toggle drafts list visibility
-  const [allDrafts, setAllDrafts] = useState([]) // To store all drafts
+  const [loading, setLoading] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
+  const [showDraftsList, setShowDraftsList] = useState(false)
+  const [allDrafts, setAllDrafts] = useState([])
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
   const contentWatch = watch("content")
 
-  useEffect(() => {
-    const matchedCategory = categories.find((c) => c.id === selectedCategory)
-    setSubCategories(matchedCategory?.subcategories || [])
-    if (selectedSubCategory && !matchedCategory?.subcategories.some((sub) => sub.id === selectedSubCategory)) {
-      setSelectedSubCategory(null)
-    }
-  }, [selectedCategory, categories, selectedSubCategory])
+  const lastInitializedPostId = useRef(undefined)
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -74,21 +67,115 @@ const PostForm = () => {
     fetchCategories()
   }, [])
 
-  // Load all drafts on initial render, but do NOT automatically load the most recent one into the form
+  useEffect(() => {
+    const matchedCategory = categories.find((c) => c.id === selectedCategory)
+    setSubCategories(matchedCategory?.subcategories || [])
+    if (selectedSubCategory && !matchedCategory?.subcategories.some((sub) => sub.id === selectedSubCategory)) {
+      setSelectedSubCategory(null)
+    }
+  }, [selectedCategory, categories, selectedSubCategory])
+
   useEffect(() => {
     const savedDrafts = JSON.parse(localStorage.getItem("postDrafts") || "[]")
-    setAllDrafts(savedDrafts.sort((a, b) => b.savedAt - a.savedAt)) // Sort by most recent
+    setAllDrafts(savedDrafts.sort((a, b) => b.savedAt - a.savedAt))
   }, [])
+
+  useEffect(() => {
+    const isReadyToInitialize = categories.length > 0
+    const hasPostIdChanged = postId !== lastInitializedPostId.current
+    const isNewPostModeAndUninitialized = postId === null && lastInitializedPostId.current !== null
+
+    if (!isReadyToInitialize) return
+
+    if (postId && hasPostIdChanged) {
+      console.log("Initializing for edit mode:", postId)
+      const fetchPost = async () => {
+        setLoading(true)
+        try {
+          const res = await axiosInstance.get(`/blogs/${postId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          const blog = res.data.blog
+          if (blog) {
+            reset({
+              title: blog.title,
+              content: blog.content,
+              id: blog._id,
+            })
+            setValue("content", blog.content)
+
+            const blogCategoryId = blog.categoryId?._id || ""
+            const blogSubcategoryId = blog.subcategoryId?._id || null
+
+            const foundCategory = categories.find((cat) => cat.id === blogCategoryId)
+            setSelectedCategory(foundCategory ? blogCategoryId : "")
+
+            if (foundCategory && foundCategory.subcategories.some((sub) => sub.id === blogSubcategoryId)) {
+              setSelectedSubCategory(blogSubcategoryId)
+            } else {
+              setSelectedSubCategory(null)
+            }
+
+            setTags(
+              Array.isArray(blog.tags)
+                ? blog.tags
+                : (blog.tags || "")
+                    .split(",")
+                    .map((tag) => tag.trim())
+                    .filter((tag) => tag.length > 0),
+            )
+            setLanguage(blog.language || "English")
+            if (blog.thumbnail) {
+              setMediaFile(blog.thumbnail)
+            } else {
+              setMediaFile(null)
+            }
+            lastInitializedPostId.current = postId
+          }
+        } catch (error) {
+          console.error("Failed to fetch post for editing:", error)
+          toast.error("Failed to load post for editing.")
+          onCancelEdit()
+        } finally {
+          setLoading(false)
+        }
+      }
+      fetchPost()
+    } else if (isNewPostModeAndUninitialized || (!postId && lastInitializedPostId.current === undefined)) {
+      console.log("Initializing for new post mode.")
+      reset()
+      setValue("content", "")
+      setValue("id", null)
+      setMediaFile(null)
+      setTags([])
+      setPreviewData(null)
+
+      setSelectedCategory(categories[0]?.id || "")
+      setSelectedSubCategory(null)
+      setLanguage("English")
+      lastInitializedPostId.current = null
+    }
+  }, [postId, categories, token, reset, setValue, onCancelEdit])
+
+  useEffect(() => {
+    let urlToRevoke = null
+    if (mediaFile instanceof File) {
+      urlToRevoke = URL.createObjectURL(mediaFile)
+    }
+    return () => {
+      if (urlToRevoke) {
+        URL.revokeObjectURL(urlToRevoke)
+      }
+    }
+  }, [mediaFile])
 
   const loadDraft = (id) => {
     const draftToLoad = allDrafts.find((draft) => draft.id === id)
     if (draftToLoad) {
-      console.log("Loading draft:", draftToLoad) // Debug log
-      reset(draftToLoad) // Reset form with draft data
-      setValue("content", draftToLoad.content) // Explicitly set content for TextEditor
-      setSelectedCategory(draftToLoad.categoryId || "686e112f2f12f405927ec78c")
+      reset(draftToLoad)
+      setValue("content", draftToLoad.content)
+      setSelectedCategory(draftToLoad.categoryId || (categories.length > 0 ? categories[0].id : ""))
       setSelectedSubCategory(draftToLoad.subCategory || null)
-      // Ensure tags are always an array, even if loaded as a string
       setTags(
         Array.isArray(draftToLoad.tags)
           ? draftToLoad.tags
@@ -98,10 +185,10 @@ const PostForm = () => {
               .filter((tag) => tag.length > 0),
       )
       setLanguage(draftToLoad.language || "English")
-      // Note: mediaFile from localStorage will be a string (name), not a File object.
-      // MediaUpload and Preview components handle this by showing a placeholder.
-      setShowDraftsList(false) // Hide drafts list after loading
+      setMediaFile(draftToLoad.thumbnail || null)
+      setShowDraftsList(false)
       toast.success("Draft loaded successfully!")
+      lastInitializedPostId.current = draftToLoad.id
     } else {
       toast.error("Draft not found.")
     }
@@ -112,14 +199,21 @@ const PostForm = () => {
     setAllDrafts(updatedDrafts)
     localStorage.setItem("postDrafts", JSON.stringify(updatedDrafts))
     toast.success("Draft deleted.")
-    // If the deleted draft was the one currently loaded, clear the form
     if (watch("id") === id) {
-      reset()
+      reset({
+        title: "",
+        category: "",
+        content: "",
+      })
       setValue("content", "")
-      setValue("id", null) // Clear the ID to ensure next save creates a new draft
+      setValue("id", null)
       setMediaFile(null)
       setTags([])
       setPreviewData(null)
+      setSelectedCategory(categories[0]?.id || "")
+      setSelectedSubCategory(null)
+      setLanguage("English")
+      lastInitializedPostId.current = null
     }
   }
 
@@ -129,29 +223,25 @@ const PostForm = () => {
 
   const onSubmit = async (data) => {
     let isValid = true
-    clearErrors() // Clear previous react-hook-form errors
-    setThumbnailError(false) // Clear previous thumbnail error
+    clearErrors()
+    setThumbnailError(false)
 
-    // Validate title
     if (!data.title || data.title.trim() === "") {
       setError("title", { message: "Article title is required." })
       isValid = false
     }
 
-    // Validate content using the robust helper
     if (isContentEmpty(data.content)) {
       setError("content", { message: "Article content is required." })
       isValid = false
     }
 
-    // Validate thumbnail
-    if (!mediaFile) {
+    if (!mediaFile && !postId) {
       setThumbnailError(true)
       isValid = false
     }
 
     if (!isValid) {
-      // No toast message here, errors are shown visually
       return
     }
 
@@ -163,51 +253,72 @@ const PostForm = () => {
 
       formData.append("title", data.title || "")
       formData.append("content", data.content || "")
-      formData.append("categoryId", catObj?.id || "")
       formData.append("language", language || "")
+
+      if (catObj?.id) {
+        formData.append("categoryId", catObj.id)
+      } else {
+        formData.append("categoryId", selectedCategory || "")
+      }
 
       if (selectedSubCategory) {
         formData.append("subcategoryId", selectedSubCategory)
       }
 
-      // Join tags array into a comma-separated string
       if (tags && tags.length > 0) {
-        formData.append("tags", tags.join(","))
+        formData.append("tags", JSON.stringify(tags))
       } else {
-        formData.append("tags", "") // Send empty string if no tags
+        formData.append("tags", "[]")
       }
 
-      if (mediaFile) {
+      if (mediaFile instanceof File) {
         formData.append("thumbnail", mediaFile)
       }
 
-      for (const pair of formData.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`)
+      let res
+      if (postId) {
+        res = await axiosInstance.put(`/blogs/${postId}`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        toast.success("Post updated successfully!")
+      } else {
+        res = await axiosInstance.post("/blogs", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        toast.success("Post published successfully!")
       }
 
-      const postRes = await axiosInstance.post("/blogs", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      })
+      console.log("Post submitted/updated:", res.data)
+      onPostSuccess(res.data.blog || res.data.data)
 
-      console.log("Post submitted:", postRes.data)
-      toast.success("Post published successfully!")
-      reset()
+      reset({
+        title: "",
+        category: "",
+        content: "",
+      })
       setValue("content", "")
-      setValue("id", null) // Clear the ID to ensure next save creates a new draft
+      setValue("id", null)
       setMediaFile(null)
       setTags([])
       setPreviewData(null)
-      // Remove the draft if it was successfully published
+      setSelectedCategory(categories[0]?.id || "")
+      setSelectedSubCategory(null)
+      setLanguage("English")
+      lastInitializedPostId.current = null
+
       const currentDraftId = watch("id")
       if (currentDraftId) {
         deleteDraft(currentDraftId)
       }
     } catch (error) {
-      console.error("Error publishing post:", error)
-      toast.error("Failed to publish post.")
+      console.error("Error publishing/updating post:", error)
+      toast.error("Failed to publish/update post.")
     } finally {
       setLoading(false)
     }
@@ -219,35 +330,30 @@ const PostForm = () => {
     const catObj = categories.find((c) => c.id === selectedCategory)
 
     const newDraft = {
-      id: values.id || Date.now(), // Use existing ID or generate new one
+      id: values.id || Date.now(),
       savedAt: Date.now(),
       ...values,
       categoryId: catObj?.id || null,
       subCategory: selectedSubCategory,
-      tags, // This is the tags state
+      tags,
       language,
+      thumbnail: typeof mediaFile === "string" ? mediaFile : null,
     }
-
-    console.log("Saving draft with tags:", newDraft.tags) // Debug log
-    console.log("Saving draft with categoryId:", newDraft.categoryId) // Debug log
-    console.log("Saving draft with subCategory:", newDraft.subCategory) // Debug log
 
     let updatedDrafts
     if (values.id) {
-      // Update existing draft
       updatedDrafts = allDrafts.map((draft) => (draft.id === values.id ? newDraft : draft))
     } else {
-      // Add new draft
       updatedDrafts = [...allDrafts, newDraft]
     }
 
-    setAllDrafts(updatedDrafts.sort((a, b) => b.savedAt - a.savedAt)) // Re-sort after update
+    setAllDrafts(updatedDrafts.sort((a, b) => b.savedAt - a.savedAt))
     localStorage.setItem("postDrafts", JSON.stringify(updatedDrafts.sort((a, b) => b.savedAt - a.savedAt)))
     toast.success("Draft saved to local storage.")
     setSavingDraft(false)
-    // Update the form with the new draft ID if it was a new draft
     if (!values.id) {
       setValue("id", newDraft.id)
+      lastInitializedPostId.current = newDraft.id
     }
   }
 
@@ -262,11 +368,15 @@ const PostForm = () => {
         content: "",
       })
       setValue("content", "")
-      setValue("id", null) // Clear the ID to ensure next save creates a new draft
+      setValue("id", null)
       setMediaFile(null)
       setTags([])
       setPreviewData(null)
+      setSelectedCategory(categories[0]?.id || "")
+      setSelectedSubCategory(null)
+      setLanguage("English")
       toast.info("Form cleared.")
+      lastInitializedPostId.current = null
     }
   }
 
@@ -342,17 +452,11 @@ const PostForm = () => {
 
   return (
     <>
-      <NavigationMenu
-        path={[
-          { label: "Home", href: "/" },
-          { label: "Post Form", href: "/post-form" },
-        ]}
-      />
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-[#F7F8FC] p-4 md:p-8 rounded-md shadow-sm max-w-4xl mx-auto my-0"
       >
-        <h1 className="text-2xl font-bold text-[#1F3C5F] mb-4">Add New Post</h1>
+        <h1 className="text-2xl font-bold text-[#1F3C5F] mb-4">{postId ? "Edit Post" : "Add New Post"}</h1>
 
         <Input
           {...register("title")}
@@ -365,7 +469,7 @@ const PostForm = () => {
         <MediaUpload
           onFileChange={(file) => {
             setMediaFile(file)
-            setThumbnailError(false) // Clear error when file is selected
+            setThumbnailError(false)
           }}
           initialFile={mediaFile}
           isInvalid={thumbnailError}
@@ -381,7 +485,7 @@ const PostForm = () => {
           <TextEditor
             onChange={(value) => {
               setValue("content", value)
-              clearErrors("content") // Clear error when content changes
+              clearErrors("content")
             }}
             initialContent={contentWatch}
             isInvalid={!!errors.content}
@@ -396,7 +500,7 @@ const PostForm = () => {
             handleSaveDraft={handleSaveDraft}
             tags={tags}
             loading={loading}
-            savingDraft={savingDraft} // Pass savingDraft state
+            savingDraft={savingDraft}
             language={language}
             setTags={setTags}
             setLanguage={setLanguage}
@@ -424,6 +528,11 @@ const PostForm = () => {
         </div>
 
         <div className="flex justify-end gap-4">
+          {postId && (
+            <Button type="button" onClick={() => setActiveTab("posts")} variant="outline">
+              Back to Posts
+            </Button>
+          )}
           <Button type="button" onClick={handlePreview} variant="outline">
             Preview
           </Button>
@@ -441,7 +550,7 @@ const PostForm = () => {
             disabled={loading}
           >
             {loading && <ClipLoader size={16} color="#ffffff" />}
-            Publish
+            {postId ? "Update Post" : "Publish"}
           </Button>
         </div>
       </form>
@@ -470,7 +579,7 @@ function Publish({ handleDelete, handleSaveDraft, loading, savingDraft, language
         }
       })
       setTags(newTags)
-      e.target.value = "" // Clear the input after processing
+      e.target.value = ""
     }
   }
 
@@ -482,7 +591,7 @@ function Publish({ handleDelete, handleSaveDraft, loading, savingDraft, language
         newTags.push(inputValue)
       }
       setTags(newTags)
-      e.target.value = "" // Clear the input after processing
+      e.target.value = ""
     }
   }
 
@@ -542,8 +651,8 @@ function Publish({ handleDelete, handleSaveDraft, loading, savingDraft, language
           id="tags-input"
           type="text"
           placeholder="Add tags separated by commas"
-          onChange={handleTagInputChange} // Use onChange for comma separation
-          onBlur={handleTagInputBlur} // Add onBlur to capture last tag
+          onChange={handleTagInputChange}
+          onBlur={handleTagInputBlur}
           className="w-full"
         />
       </div>

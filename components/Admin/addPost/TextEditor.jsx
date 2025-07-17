@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState, useCallback, useEffect } from "react" // Import useEffect
+import { useState, useCallback, useEffect } from "react"
 
 const FontSize = Extension.create({
   name: "fontSize",
@@ -54,7 +54,7 @@ const FontSize = Extension.create({
 export default function TextEditor({ onChange, initialContent = "<p>Hello world!</p>", isInvalid }) {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
-  const [editorStateKey, setEditorStateKey] = useState(0) // New state to force re-render
+  const [editorStateKey, setEditorStateKey] = useState(0)
 
   const editor = useEditor({
     extensions: [
@@ -72,7 +72,6 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
       Highlight.configure({
         multicolor: true,
       }),
-      // Removed Color and BackgroundColor extensions
     ],
     content: initialContent,
     editorProps: {
@@ -82,13 +81,11 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
     },
     onUpdate: ({ editor }) => {
       onChange?.(editor.getHTML())
-      // Also update the key on content change to ensure active states are correct
       setEditorStateKey((prev) => prev + 1)
     },
     immediatelyRender: false,
   })
 
-  // Effect to force re-render on selection changes
   useEffect(() => {
     if (!editor) return
 
@@ -103,10 +100,9 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
     }
   }, [editor])
 
-  // Effect to update editor content when initialContent prop changes
   useEffect(() => {
     if (editor && initialContent !== editor.getHTML()) {
-      editor.commands.setContent(initialContent, false) // false to prevent dispatching a transaction if content is already the same
+      editor.commands.setContent(initialContent, false)
     }
   }, [editor, initialContent])
 
@@ -124,7 +120,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
         editor.chain().focus().extendMarkRange("link").unsetLink().run()
       }
       setIsLinkDialogOpen(false)
-      setEditorStateKey((prev) => prev + 1) // Force re-render after link action
+      setEditorStateKey((prev) => prev + 1)
     }
   }, [editor, linkUrl])
 
@@ -132,7 +128,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
     if (editor) {
       editor.chain().focus().extendMarkRange("link").unsetLink().run()
       setIsLinkDialogOpen(false)
-      setEditorStateKey((prev) => prev + 1) // Force re-render after link action
+      setEditorStateKey((prev) => prev + 1)
     }
   }, [editor])
 
@@ -140,13 +136,12 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
 
   return (
     <div className="space-y-2">
-      {/* Add editorStateKey to force re-render of the button group */}
       <div className="flex items-center gap-2 mb-2 flex-wrap" key={editorStateKey}>
         <Button
           type="button"
           onClick={() => {
             editor.chain().focus().toggleBold().run()
-            setEditorStateKey((prev) => prev + 1) // Force re-render
+            setEditorStateKey((prev) => prev + 1)
           }}
           variant="ghost"
           size="icon"
@@ -160,7 +155,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
           type="button"
           onClick={() => {
             editor.chain().focus().toggleItalic().run()
-            setEditorStateKey((prev) => prev + 1) // Force re-render
+            setEditorStateKey((prev) => prev + 1)
           }}
           variant="ghost"
           size="icon"
@@ -174,7 +169,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
           type="button"
           onClick={() => {
             editor.chain().focus().toggleUnderline().run()
-            setEditorStateKey((prev) => prev + 1) // Force re-render
+            setEditorStateKey((prev) => prev + 1)
           }}
           variant="ghost"
           size="icon"
@@ -188,7 +183,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
           type="button"
           onClick={() => {
             editor.chain().focus().toggleBulletList().run()
-            setEditorStateKey((prev) => prev + 1) // Force re-render
+            setEditorStateKey((prev) => prev + 1)
           }}
           variant="ghost"
           size="icon"
@@ -202,7 +197,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
           type="button"
           onClick={() => {
             editor.chain().focus().toggleOrderedList().run()
-            setEditorStateKey((prev) => prev + 1) // Force re-render
+            setEditorStateKey((prev) => prev + 1)
           }}
           variant="ghost"
           size="icon"
@@ -256,7 +251,6 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
           <option value="#d1c4e9">Purple</option>
           <option value="">None</option>
         </select>
-        {/* Removed Text Color select */}
       </div>
       <EditorContent editor={editor} />
 

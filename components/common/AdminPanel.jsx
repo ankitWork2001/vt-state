@@ -13,7 +13,7 @@ const AdminPanel = ({ onSelect, activeKey, isOpen, setIsOpen }) => {
     { icon: <Home size={18} />, label: "Dashboard", key: "dashboard" },
     { icon: <FileText size={18} />, label: "Posts", key: "posts" },
     { icon: <Edit3 size={18} />, label: "Post Form", key: "postForm" },
-    { icon: <BarChart2 size={18} />, label: "Analytics", key: "analytics" },
+    // { icon: <BarChart2 size={18} />, label: "Analytics", key: "analytics" },
   ]
 
   return (

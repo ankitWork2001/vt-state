@@ -12,9 +12,7 @@ const MediaUpload = ({ onFileChange, initialFile, isInvalid }) => {
     if (initialFile instanceof File) {
       setPreviewUrl(URL.createObjectURL(initialFile))
     } else if (typeof initialFile === "string" && initialFile.length > 0) {
-      // If initialFile is a string (e.g., filename from local storage),
-      // we can't create an object URL directly. Show a placeholder or handle differently.
-      setPreviewUrl(null) // Set to null so the <img> tag uses its fallback
+      setPreviewUrl(initialFile)
     } else {
       setPreviewUrl(null)
     }
@@ -78,7 +76,6 @@ const MediaUpload = ({ onFileChange, initialFile, isInvalid }) => {
           </Button>
         </div>
       )}
-      {/* Display filename if initialFile is a string and no previewUrl is available */}
       {typeof initialFile === "string" && initialFile.length > 0 && !previewUrl && (
         <span className="text-sm text-gray-500">{initialFile} (Saved)</span>
       )}

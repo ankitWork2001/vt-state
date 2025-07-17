@@ -1,79 +1,90 @@
-"use client";
-import { useState } from "react";
-import { Pencil, Trash2, Eye, X } from "lucide-react";
-import PostDetails from "@/components/Admin/posts/PostDetail";
-import EditBlogForm from "@/components/Admin/posts/EditBlogForm";
-import { axiosInstance } from "@/lib/axios";
+"use client"
+import { useState } from "react"
+import { Pencil, Trash2, Eye } from "lucide-react"
+import PostDetails from "@/components/Admin/posts/PostDetail"
+import PostForm from "@/components/Admin/addPost/PostForm"
+import { axiosInstance } from "@/lib/axios"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { toast } from "react-hot-toast" // Changed to react-hot-toast for consistency
 
-const RecentPosts = ({
-  posts = [],
-  onUpdate = () => {},
-  onDelete = () => {},
-}) => {
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [editingPost, setEditingPost] = useState(null);
+const RecentPosts = ({ posts = [], onUpdate = () => {}, onDelete = () => {} }) => {
+  const [selectedPost, setSelectedPost] = useState(null)
+  const [editingPostId, setEditingPostId] = useState(null)
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false)
+  const [postToDeleteId, setPostToDeleteId] = useState(null)
 
-  const token = localStorage.getItem("token");
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
   const handleView = (id) => {
-    const post = posts.find((p) => (p.id || p._id) === id);
-    setSelectedPost(post);
-  };
+    const post = posts.find((p) => (p.id || p._id) === id)
+    setSelectedPost(post)
+  }
 
   const handleEdit = (id) => {
-    const post = posts.find((p) => (p.id || p._id) === id);
-    setEditingPost(post);
-  };
+    setEditingPostId(id)
+  }
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this post?"
-    );
-    if (!confirmDelete) return;
+  const handleDeleteClick = (id) => {
+    setPostToDeleteId(id)
+    setShowDeleteConfirmDialog(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!postToDeleteId) return
 
     try {
-      await axiosInstance.delete(`/blogs/${id}`, {
+      await axiosInstance.delete(`/blogs/${postToDeleteId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
-      onDelete(id);
+      })
+      onDelete(postToDeleteId)
+      toast.success("Post deleted successfully!")
     } catch (err) {
-      console.error("Error deleting post:", err);
+      console.error("Error deleting post:", err)
+      toast.error("Failed to delete post.")
+    } finally {
+      setShowDeleteConfirmDialog(false)
+      setPostToDeleteId(null)
     }
-  };
+  }
+
+  const handlePostUpdate = (updatedPost) => {
+    onUpdate(updatedPost)
+    setEditingPostId(null)
+  }
 
   if (selectedPost) {
+    return <PostDetails post={selectedPost} onBack={() => setSelectedPost(null)} />
+  }
+
+  if (editingPostId) {
     return (
-      <PostDetails post={selectedPost} onBack={() => setSelectedPost(null)} />
-    );
+      <PostForm postId={editingPostId} onPostSuccess={handlePostUpdate} onCancelEdit={() => setEditingPostId(null)} />
+    )
   }
 
   return (
     <div className="bg-white shadow-md rounded-md overflow-hidden mt-6 w-full">
-      <h2 className="text-2xl font-semibold text-[#1F3C5F] bg-[#EDF0FB] px-4 py-3">
-        Recent Posts
-      </h2>
+      <h2 className="text-2xl font-semibold text-[#1F3C5F] bg-[#EDF0FB] px-4 py-3">Recent Posts</h2>
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm text-left">
           <thead className="bg-[#A2DD62] h-[56px] text-white">
             <tr>
-              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">
-                Title
-              </th>
-              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">
-                Category
-              </th>
-              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">
-                Date
-              </th>
-              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">
-                Views
-              </th>
-              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">
-                Actions
-              </th>
+              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">Title</th>
+              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">Category</th>
+              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">Date</th>
+              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">Views</th>
+              <th className="px-4 py-2 font-bold text-[16px] sm:text-[18px] text-[#1F3C5F]">Actions</th>
             </tr>
           </thead>
 
@@ -84,9 +95,7 @@ const RecentPosts = ({
                 className="border-b border-gray-200 hover:bg-gray-50 text-[16px] sm:text-[18px]"
               >
                 <td className="px-4 py-4">{post.title}</td>
-                <td className="px-4 py-4">
-                  {post.category?.name || post.category || "Uncategorized"}
-                </td>
+                <td className="px-4 py-4">{post.category?.name || post.category || "Uncategorized"}</td>
                 <td className="px-4 py-4">{post.date || post.Date}</td>
                 <td className="px-4 py-4">{post.views ?? 0}</td>
                 <td className="px-4 py-4">
@@ -104,7 +113,7 @@ const RecentPosts = ({
                       <Pencil size={18} />
                     </button>
                     <button
-                      onClick={() => handleDelete(post.id || post._id)}
+                      onClick={() => handleDeleteClick(post.id || post._id)}
                       className="text-red-600 hover:text-red-800"
                     >
                       <Trash2 size={18} />
@@ -116,35 +125,30 @@ const RecentPosts = ({
           </tbody>
         </table>
 
-        {posts.length === 0 && (
-          <div className="p-4 text-center text-gray-500">
-            No recent posts available.
-          </div>
-        )}
+        {posts.length === 0 && <div className="p-4 text-center text-gray-500">No recent posts available.</div>}
       </div>
 
-      {editingPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-opacity-50 backdrop-blur-lg">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl shadow-2xl relative">
-            <button
-              onClick={() => setEditingPost(null)}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-            >
-              <X size={24} />
-            </button>
-            <EditBlogForm
-              postId={editingPost.id || editingPost._id}
-              onCancel={() => setEditingPost(null)}
-              onSuccess={(updatedPost) => {
-                onUpdate(updatedPost); // Tell parent to update post list
-                setEditingPost(null);
-              }}
-            />
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirmDialog(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
-};
+  )
+}
 
-export default RecentPosts;
+export default RecentPosts

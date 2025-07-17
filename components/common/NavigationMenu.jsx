@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function NavigationMenu({ path = [] }) {
   
   return (
-    <nav className="bg-[#F4F6F9]  max-w-[1240px] mx-auto  h-10 text-sm text-[#6C757D] flex items-center font-normal px-6 py-4">
+    <nav className="bg-[#F4F6F9]  max-w-[1240px] mx-auto h-10 text-sm text-[#6C757D] flex items-center font-normal px-6 py-4">
       <div className="">
         {path.map((item, index) => (
           <span key={index}>
