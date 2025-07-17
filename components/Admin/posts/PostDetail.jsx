@@ -1,24 +1,34 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Heart, MessageCircle, Bookmark, } from "lucide-react";
+import { Heart, MessageCircle, Bookmark } from "lucide-react";
 import Image from "next/image";
 import { axiosInstance } from "@/lib/axios";
 
 const PostDetail = ({ post }) => {
   const [fullPost, setFullPost] = useState(post);
   const [comments, setComments] = useState([]);
+  const [analytics, setAnalytics] = useState([]);
   const [showFullContent, setShowFullContent] = useState(false);
 
   // Fetch latest blog with likes, and fetch comments
   useEffect(() => {
     const fetchDetails = async () => {
+      const token = localStorage.getItem("token");
       try {
-        const [blogRes, commentRes] = await Promise.all([
-          axiosInstance.get(`/blogs/${post._id}`),
-          axiosInstance.get(`/comments/${post._id}`),
+        const [blogRes, commentRes, analyticsres] = await Promise.all([
+          axiosInstance.get(`/blogs/${post.id}`),
+          axiosInstance.get(`/comments/${post.id}`),
+          axiosInstance.get(`/analytics/article/${post.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
         ]);
 
         if (blogRes.data?.blog) setFullPost(blogRes.data.blog);
+        console.log("ress", blogRes.data.blog);
+        if (analyticsres.data) setAnalytics(analyticsres.data.data);
+
         if (commentRes.data?.comments) setComments(commentRes.data.comments);
       } catch (error) {
         console.error("Error fetching post or comments:", error);
@@ -26,7 +36,7 @@ const PostDetail = ({ post }) => {
     };
 
     fetchDetails();
-  }, [post._id]);
+  }, [post.id]);
 
   if (!fullPost)
     return (
@@ -42,8 +52,16 @@ const PostDetail = ({ post }) => {
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <Card title="Views" value={fullPost.views || 246} sub="28 more than usual" />
-        <Card title="Time Spent (hours)" value={fullPost.readTime || 1.4} sub="24% more than previous 28 days" />
+        <Card
+          title="Views"
+          value={analytics.views || 0}
+          sub="28 more than usual"
+        />
+        <Card
+          title="Time Spent (hours)"
+          value={((analytics.avgReadTime ?? 84) / 60).toFixed(2)}
+          sub="24% more than previous 28 days"
+        />
       </div>
 
       {/* Title & Date */}
@@ -51,7 +69,7 @@ const PostDetail = ({ post }) => {
         {fullPost.title}
       </h2>
       <p className="text-center text-sm text-gray-500 mb-4">
-        {new Date(fullPost.createdAt).toLocaleString("en-GB", {
+        {new Date(post.Date).toLocaleString("en-GB", {
           day: "numeric",
           month: "short",
           year: "numeric",
@@ -77,14 +95,15 @@ const PostDetail = ({ post }) => {
       {/* Engagement Icons */}
       <div className="flex justify-center gap-6 text-gray-700 mb-6 flex-wrap">
         <div className="flex items-center gap-1">
-          <Heart className="text-red-500" size={18} /> {fullPost.likes?.length || 0}
+          <Heart className="text-red-500" size={18} />{" "}
+          {fullPost.likes?.length || 0}
         </div>
         <div className="flex items-center gap-1">
           <MessageCircle size={18} /> {comments.length || 0}
         </div>
         <div className="flex items-center gap-1">
-          <Bookmark size={18} /> {fullPost.bookmarks?.length || 0} 
-                </div>
+          <Bookmark size={18} /> {fullPost.bookmarks?.length || 0}
+        </div>
       </div>
 
       {/* Content */}

@@ -1,12 +1,13 @@
+"use client";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { axiosInstance } from "@/lib/axios";
 
-const EditBlogForm = ({ post, onCancel, onSuccess }) => {
+const EditBlogForm = ({ postId, onCancel, onSuccess }) => {
   const [categories, setCategories] = useState([]);
-  const [thumbnailPreview, setThumbnailPreview] = useState(
-    post?.thumbnail || null
-  );
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [fullPost, setFullPost] = useState(null);
+  const [subcategories, setSubcategories] = useState([]);
 
   const {
     register,
@@ -17,58 +18,96 @@ const EditBlogForm = ({ post, onCancel, onSuccess }) => {
     reset,
   } = useForm({
     defaultValues: {
-      title: post?.title || "",
-      content: post?.content || "",
-      tags: Array.isArray(post?.tags) ? post.tags.join(", ") : "",
-      language: post?.language || "English",
-      categoryId: post?.categoryId || "",
-      subcategoryId: post?.subcategoryId?._id || "",
+      title: "",
+      content: "",
+      tags: "",
+      language: "English",
+      categoryId: "",
+      subcategoryId: "",
     },
   });
 
   const selectedCategoryId = watch("categoryId");
 
   useEffect(() => {
-    async function fetchCategories() {
+    const fetchDetails = async () => {
       try {
-        const res = await axiosInstance.get("/categories");
-        setCategories(res.data.data || []);
+        const token = localStorage.getItem("token");
+
+        const [blogRes, categoryRes] = await Promise.all([
+          axiosInstance.get(`/blogs/${postId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axiosInstance.get("/categories", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (blogRes.data?.blog) {
+          const blog = blogRes.data.blog;
+          setFullPost(blog);
+          setThumbnailPreview(blog.thumbnail || null);
+
+          reset({
+            title: blog.title,
+            content: blog.content,
+            tags: Array.isArray(blog.tags) ? blog.tags.join(", ") : "",
+            language: blog.language || "English",
+            categoryId: blog.categoryId?._id || "",
+            subcategoryId: blog.subcategoryId?._id || "",
+          });
+        }
+
+        if (categoryRes?.data?.data) {
+          setCategories(categoryRes.data.data);
+          const allSubcats = categoryRes.data.data.flatMap(
+            (cat) => cat.subcategories || []
+          );
+          setSubcategories(allSubcats);
+        }
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
+        console.error("Error fetching blog or categories:", error);
       }
-    }
-    fetchCategories();
-  }, []);
+    };
+
+    fetchDetails();
+  }, [postId, reset]);
+
+  useEffect(() => {
+    setValue("subcategoryId", "");
+  }, [selectedCategoryId, setValue]);
 
   const selectedCategory = categories.find(
-    (cat) => cat.id === selectedCategoryId
+    (cat) => cat._id === selectedCategoryId
   );
-  const subcategories = selectedCategory?.subcategories || [];
-
+  const currentSubcategories = selectedCategory?.subcategories || [];
   const finalSubcategoryId =
-    subcategories.length > 0
-      ? watch("subcategoryId") || post?.subcategoryId?._id
-      : post?.subcategoryId?._id || "";
+    watch("subcategoryId") || fullPost?.subcategoryId?._id || "";
 
   const handleThumbnailChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setThumbnailPreview(URL.createObjectURL(file));
+      const url = URL.createObjectURL(file);
+      setThumbnailPreview(url);
       setValue("thumbnail", file);
+
+      return () => URL.revokeObjectURL(url);
     }
   };
 
   const onSubmit = async (data) => {
-    console.log(data);
-
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("content", data.content);
     formData.append("language", data.language);
-    formData.append("tags", data.tags);
     formData.append("categoryId", data.categoryId);
 
-    // Only append subcategoryId if it's not empty
+    const parsedTags = data.tags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+    formData.append("tags", JSON.stringify(parsedTags));
+
     if (finalSubcategoryId) {
       formData.append("subcategoryId", finalSubcategoryId);
     }
@@ -79,15 +118,20 @@ const EditBlogForm = ({ post, onCancel, onSuccess }) => {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await axiosInstance.put(`/blogs/${post._id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axiosInstance.put(
+        `/blogs/${fullPost?._id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.data?.blog) {
         onSuccess(response.data.blog);
+
         reset();
       }
     } catch (error) {
@@ -103,7 +147,7 @@ const EditBlogForm = ({ post, onCancel, onSuccess }) => {
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="max-w-3xl mx-auto p-4 bg-white rounded-lg shadow-lg space-y-3 overflow-auto"
-      style={{ maxHeight: "80vh" }} // allows scrolling when the form height exceeds the screen height
+      style={{ maxHeight: "80vh", overflowY: "auto" }}
     >
       <h2 className="text-lg font-semibold text-gray-800 mb-3 text-center">
         Edit Blog Post
@@ -128,7 +172,7 @@ const EditBlogForm = ({ post, onCancel, onSuccess }) => {
         )}
       </div>
 
-      {/* Language and Tags in a 2-column grid */}
+      {/* Language and Tags */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -155,12 +199,17 @@ const EditBlogForm = ({ post, onCancel, onSuccess }) => {
         </div>
       </div>
 
-      {/* Category and Subcategory in a 2-column grid */}
+      {/* Category and Subcategory */}
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
             Category
           </label>
+          {fullPost?.categoryId?.name && (
+            <p className="mb-2 text-sm text-gray-600">
+              Current Category: <strong>{fullPost.categoryId.name}</strong>
+            </p>
+          )}
           <select
             {...register("categoryId", { required: "Category is required" })}
             className={`w-full rounded-sm border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 ${
@@ -190,20 +239,21 @@ const EditBlogForm = ({ post, onCancel, onSuccess }) => {
           <select
             {...register("subcategoryId")}
             className="w-full rounded-sm border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={subcategories.length === 0}
+            disabled={!selectedCategoryId || subcategories.length === 0}
           >
             <option value="">Select Subcategory</option>
             {subcategories.map((subcat) => (
-              <option key={subcat.id} value={subcat.id}>
+              <option className="text-[12px]" key={subcat.id} value={subcat.id}>
                 {subcat.name}
               </option>
             ))}
           </select>
-          {subcategories.length === 0 && (
+
+          {!selectedCategoryId || subcategories.length === 0 ? (
             <p className="text-sm text-gray-500 mt-1">
               No subcategories available
             </p>
-          )}
+          ) : null}
         </div>
       </div>
 
