@@ -4,13 +4,17 @@ import { useRef, useState, useEffect } from "react"
 import { ImageIcon, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-const MediaUpload = ({ onFileChange, initialFile }) => {
+const MediaUpload = ({ onFileChange, initialFile, isInvalid }) => {
   const fileInputRef = useRef(null)
   const [previewUrl, setPreviewUrl] = useState(null)
 
   useEffect(() => {
     if (initialFile instanceof File) {
       setPreviewUrl(URL.createObjectURL(initialFile))
+    } else if (typeof initialFile === "string" && initialFile.length > 0) {
+      // If initialFile is a string (e.g., filename from local storage),
+      // we can't create an object URL directly. Show a placeholder or handle differently.
+      setPreviewUrl(null) // Set to null so the <img> tag uses its fallback
     } else {
       setPreviewUrl(null)
     }
@@ -40,7 +44,9 @@ const MediaUpload = ({ onFileChange, initialFile }) => {
   }
 
   return (
-    <div className="flex items-center gap-2 mb-4">
+    <div
+      className={`flex items-center gap-2 mb-4 p-2 border rounded-md ${isInvalid ? "border-red-500" : "border-transparent"}`}
+    >
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
       <Button
@@ -71,6 +77,10 @@ const MediaUpload = ({ onFileChange, initialFile }) => {
             <XCircle size={20} />
           </Button>
         </div>
+      )}
+      {/* Display filename if initialFile is a string and no previewUrl is available */}
+      {typeof initialFile === "string" && initialFile.length > 0 && !previewUrl && (
+        <span className="text-sm text-gray-500">{initialFile} (Saved)</span>
       )}
     </div>
   )

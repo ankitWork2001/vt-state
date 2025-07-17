@@ -51,7 +51,7 @@ const FontSize = Extension.create({
   },
 })
 
-export default function TextEditor({ onChange, initialContent = "<p>Hello world!</p>" }) {
+export default function TextEditor({ onChange, initialContent = "<p>Hello world!</p>", isInvalid }) {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
   const [editorStateKey, setEditorStateKey] = useState(0) // New state to force re-render
@@ -77,7 +77,7 @@ export default function TextEditor({ onChange, initialContent = "<p>Hello world!
     content: initialContent,
     editorProps: {
       attributes: {
-        class: "min-h-[200px] border p-4 rounded focus:outline-none prose max-w-none",
+        class: `min-h-[200px] border p-4 rounded focus:outline-none prose max-w-none ${isInvalid ? "border-red-500 focus:border-red-500" : ""}`,
       },
     },
     onUpdate: ({ editor }) => {

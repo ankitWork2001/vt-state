@@ -14,9 +14,25 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { XCircle } from "lucide-react"
 import DraftsList from "@/components/Admin/addPost/DraftsList" // Import the new component
+import toast from "react-hot-toast"
+
+const isContentEmpty = (htmlContent) => {
+  const div = document.createElement("div")
+  div.innerHTML = htmlContent
+  return div.textContent.trim().length === 0
+}
 
 const PostForm = () => {
-  const { register, handleSubmit, setValue, watch, reset } = useForm()
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useForm()
   const [categories, setCategories] = useState([])
   const [selectedCategory, setSelectedCategory] = useState("686e112f2f12f405927ec78c")
   const [subCategories, setSubCategories] = useState([])
@@ -28,6 +44,7 @@ const PostForm = () => {
   const [showCatInput, setShowCatInput] = useState(false)
   const [showSubInput, setShowSubInput] = useState(false)
   const [mediaFile, setMediaFile] = useState(null)
+  const [thumbnailError, setThumbnailError] = useState(false) // New state for thumbnail validation
   const [previewData, setPreviewData] = useState(null)
   const [loading, setLoading] = useState(false) // For Publish button
   const [savingDraft, setSavingDraft] = useState(false) // For Save Draft button
@@ -57,19 +74,11 @@ const PostForm = () => {
     fetchCategories()
   }, [])
 
-  // Load all drafts and the most recent one on initial render
+  // Load all drafts on initial render, but do NOT automatically load the most recent one into the form
   useEffect(() => {
-    if (categories.length === 0) return // Ensure categories are loaded before attempting to load drafts
-
     const savedDrafts = JSON.parse(localStorage.getItem("postDrafts") || "[]")
-    setAllDrafts(savedDrafts)
-
-    if (savedDrafts.length > 0) {
-      // Load the most recent draft by default
-      const mostRecentDraft = savedDrafts.sort((a, b) => b.savedAt - a.savedAt)[0]
-      loadDraft(mostRecentDraft.id)
-    }
-  }, [categories]) // Depend on categories to ensure they are loaded for category/subcategory matching
+    setAllDrafts(savedDrafts.sort((a, b) => b.savedAt - a.savedAt)) // Sort by most recent
+  }, [])
 
   const loadDraft = (id) => {
     const draftToLoad = allDrafts.find((draft) => draft.id === id)
@@ -91,8 +100,10 @@ const PostForm = () => {
       setLanguage(draftToLoad.language || "English")
       // Note: mediaFile from localStorage will be a string (name), not a File object.
       // MediaUpload and Preview components handle this by showing a placeholder.
-      setMediaFile(draftToLoad.thumbnail || null)
       setShowDraftsList(false) // Hide drafts list after loading
+      toast.success("Draft loaded successfully!")
+    } else {
+      toast.error("Draft not found.")
     }
   }
 
@@ -100,11 +111,12 @@ const PostForm = () => {
     const updatedDrafts = allDrafts.filter((draft) => draft.id !== id)
     setAllDrafts(updatedDrafts)
     localStorage.setItem("postDrafts", JSON.stringify(updatedDrafts))
-    alert("Draft deleted.")
+    toast.success("Draft deleted.")
     // If the deleted draft was the one currently loaded, clear the form
     if (watch("id") === id) {
       reset()
       setValue("content", "")
+      setValue("id", null) // Clear the ID to ensure next save creates a new draft
       setMediaFile(null)
       setTags([])
       setPreviewData(null)
@@ -116,6 +128,33 @@ const PostForm = () => {
   }
 
   const onSubmit = async (data) => {
+    let isValid = true
+    clearErrors() // Clear previous react-hook-form errors
+    setThumbnailError(false) // Clear previous thumbnail error
+
+    // Validate title
+    if (!data.title || data.title.trim() === "") {
+      setError("title", { message: "Article title is required." })
+      isValid = false
+    }
+
+    // Validate content using the robust helper
+    if (isContentEmpty(data.content)) {
+      setError("content", { message: "Article content is required." })
+      isValid = false
+    }
+
+    // Validate thumbnail
+    if (!mediaFile) {
+      setThumbnailError(true)
+      isValid = false
+    }
+
+    if (!isValid) {
+      // No toast message here, errors are shown visually
+      return
+    }
+
     setLoading(true)
     try {
       handlePreview()
@@ -154,9 +193,10 @@ const PostForm = () => {
       })
 
       console.log("Post submitted:", postRes.data)
-      alert("Post published successfully!")
+      toast.success("Post published successfully!")
       reset()
       setValue("content", "")
+      setValue("id", null) // Clear the ID to ensure next save creates a new draft
       setMediaFile(null)
       setTags([])
       setPreviewData(null)
@@ -167,7 +207,7 @@ const PostForm = () => {
       }
     } catch (error) {
       console.error("Error publishing post:", error)
-      alert("Failed to publish post.")
+      toast.error("Failed to publish post.")
     } finally {
       setLoading(false)
     }
@@ -184,7 +224,6 @@ const PostForm = () => {
       ...values,
       categoryId: catObj?.id || null,
       subCategory: selectedSubCategory,
-      thumbnail: mediaFile instanceof File ? mediaFile.name : mediaFile, // Save name if it's a File
       tags, // This is the tags state
       language,
     }
@@ -202,9 +241,9 @@ const PostForm = () => {
       updatedDrafts = [...allDrafts, newDraft]
     }
 
-    setAllDrafts(updatedDrafts)
-    localStorage.setItem("postDrafts", JSON.stringify(updatedDrafts))
-    alert("Draft saved to local storage.")
+    setAllDrafts(updatedDrafts.sort((a, b) => b.savedAt - a.savedAt)) // Re-sort after update
+    localStorage.setItem("postDrafts", JSON.stringify(updatedDrafts.sort((a, b) => b.savedAt - a.savedAt)))
+    toast.success("Draft saved to local storage.")
     setSavingDraft(false)
     // Update the form with the new draft ID if it was a new draft
     if (!values.id) {
@@ -223,10 +262,11 @@ const PostForm = () => {
         content: "",
       })
       setValue("content", "")
+      setValue("id", null) // Clear the ID to ensure next save creates a new draft
       setMediaFile(null)
       setTags([])
       setPreviewData(null)
-      alert("Form cleared.")
+      toast.info("Form cleared.")
     }
   }
 
@@ -250,8 +290,10 @@ const PostForm = () => {
       setCategories((prev) => [...prev, res.data.data])
       setNewCategory("")
       setShowCatInput(false)
+      toast.success("Category added successfully!")
     } catch (error) {
       console.error("Failed to add category", error)
+      toast.error("Failed to add category.")
     }
   }
 
@@ -259,7 +301,10 @@ const PostForm = () => {
     if (!newSubcategory.trim()) return
 
     const categoryObj = categories.find((c) => c.id === selectedCategory)
-    if (!categoryObj) return
+    if (!categoryObj) {
+      toast.error("Please select a category first.")
+      return
+    }
 
     try {
       const res = await axiosInstance.post(
@@ -288,8 +333,10 @@ const PostForm = () => {
             : cat,
         ),
       )
+      toast.success("Subcategory added successfully!")
     } catch (error) {
       console.error("Failed to add subcategory", error)
+      toast.error("Failed to add subcategory.")
     }
   }
 
@@ -303,18 +350,45 @@ const PostForm = () => {
       />
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-[#F7F8FC] p-4 md:p-8 rounded-md shadow-sm max-w-4xl mx-auto my-8"
+        className="bg-[#F7F8FC] p-4 md:p-8 rounded-md shadow-sm max-w-4xl mx-auto my-0"
       >
         <h1 className="text-2xl font-bold text-[#1F3C5F] mb-4">Add New Post</h1>
 
-        <Input {...register("title")} type="text" placeholder="Article name" className="w-full mb-4" />
+        <Input
+          {...register("title")}
+          type="text"
+          placeholder="Article name"
+          className={`w-full mb-4 ${errors.title ? "border-red-500 focus:border-red-500" : ""}`}
+        />
+        {errors.title && <p className="text-red-500 text-sm mb-2">{errors.title.message}</p>}
 
-        <MediaUpload onFileChange={setMediaFile} initialFile={mediaFile} />
+        <MediaUpload
+          onFileChange={(file) => {
+            setMediaFile(file)
+            setThumbnailError(false) // Clear error when file is selected
+          }}
+          initialFile={mediaFile}
+          isInvalid={thumbnailError}
+        />
+        {thumbnailError && <p className="text-red-500 text-sm mb-2">Thumbnail image is required.</p>}
 
         <div className="p-0 mb-4">
-          <TextEditor onChange={(value) => setValue("content", value)} initialContent={contentWatch} />
+          <p className="text-sm text-gray-600 mb-2">
+            **Tip for bullet points:** To create a bulleted list, type your introductory text, then press `Enter` twice
+            to start a new line. Now, click the bullet list button. Each subsequent `Enter` will create a new list item.
+            Press `Enter` twice to exit the list.
+          </p>
+          <TextEditor
+            onChange={(value) => {
+              setValue("content", value)
+              clearErrors("content") // Clear error when content changes
+            }}
+            initialContent={contentWatch}
+            isInvalid={!!errors.content}
+          />
           <input type="hidden" {...register("content")} />
         </div>
+        {errors.content && <p className="text-red-500 text-sm mb-2">{errors.content.message}</p>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Publish
@@ -354,6 +428,14 @@ const PostForm = () => {
             Preview
           </Button>
           <Button
+            type="button"
+            onClick={() => setShowDraftsList((prev) => !prev)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            {showDraftsList ? "Hide Drafts" : `View Saved Drafts (${allDrafts.length})`}
+          </Button>
+          <Button
             type="submit"
             className="bg-[#1F3C5F] text-white flex items-center gap-2 hover:bg-[#1F3C5F]/90"
             disabled={loading}
@@ -364,10 +446,7 @@ const PostForm = () => {
         </div>
       </form>
 
-      <div className="max-w-4xl mx-auto my-8">
-        <Button type="button" onClick={() => setShowDraftsList((prev) => !prev)} variant="outline" className="w-full">
-          {showDraftsList ? "Hide Drafts" : "View Saved Drafts"}
-        </Button>
+      <div className="max-w-4xl mx-auto my-0">
         {showDraftsList && <DraftsList drafts={allDrafts} onLoadDraft={loadDraft} onDeleteDraft={deleteDraft} />}
       </div>
 
@@ -477,14 +556,19 @@ function Publish({ handleDelete, handleSaveDraft, loading, savingDraft, language
       </p>
 
       <div className="flex justify-between mt-4">
-        <Button type="button" onClick={handleDelete} variant="outline" className="text-red-600 hover:text-red-800 border-red-600">
+        <Button
+          type="button"
+          onClick={handleDelete}
+          variant="outline"
+          className="text-red-600 hover:text-red-800 border-red-600 bg-transparent"
+        >
           Delete
         </Button>
         <Button
           type="button"
           onClick={handleSaveDraft}
           className="bg-green-500 text-white flex items-center gap-2 hover:bg-green-500/90 "
-          disabled={savingDraft} 
+          disabled={savingDraft}
         >
           {savingDraft && <ClipLoader size={16} color="#ffffff" />}
           Save Draft
@@ -624,7 +708,7 @@ function Preview({ previewData, tags, categories }) {
     previewData.mediaFile instanceof File ? URL.createObjectURL(previewData.mediaFile) : "/placeholder.svg"
 
   return (
-    <div className="max-w-4xl mx-auto mt-6 bg-white rounded-md p-6 shadow-sm border">
+    <div className="max-w-4xl mx-auto bg-white rounded-md p-6 shadow-sm border">
       <h2 className="text-2xl font-bold mb-4">{previewData.title}</h2>
 
       {previewData.mediaFile && (

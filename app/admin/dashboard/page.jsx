@@ -15,8 +15,7 @@ import PostForm from "@/components/Admin/addPost/PostForm"
 import Analytics from "@/components/Admin/Analytics"
 import { axiosInstance } from "@/lib/axios"
 
-import { Skeleton } from "@/components/ui/skeleton";
-
+import { Skeleton } from "@/components/ui/skeleton"
 
 const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState("dashboard")
@@ -24,7 +23,6 @@ const DashboardPage = () => {
   const [stats, setStats] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true) // Add loading state
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,8 +35,8 @@ const DashboardPage = () => {
         if (userString) {
           try {
             const user = JSON.parse(userString)
-           
-            token = localStorage.getItem("token") || "" 
+
+            token = localStorage.getItem("token") || ""
           } catch (e) {
             console.error("Failed to parse user string from localStorage:", e)
           }
@@ -46,7 +44,7 @@ const DashboardPage = () => {
 
         if (!token) {
           console.warn("Authentication token not found in localStorage. API calls might fail.")
-          
+
           // Optionally, redirect to login or show an error
         }
 
@@ -108,7 +106,7 @@ const DashboardPage = () => {
       default:
         return (
           <>
-            <div className="ml-5">
+            <div>
               <NavigationMenu
                 path={[
                   { label: "Home", href: "/" },
@@ -119,14 +117,14 @@ const DashboardPage = () => {
               <h1 className="text-3xl text-[#1F3C5F] font-semibold mt-8">Dashboard</h1>
               {loading ? (
                 <div className="text-center mt-10 text-gray-500 animate-pulse">
-                  <StatCardsSkeleton/>
+                  <StatCardsSkeleton />
                 </div>
               ) : (
                 stats && <StatCards stats={stats} />
               )}
               {loading ? (
                 <div className="text-center mt-10 text-gray-500 animate-pulse">
-                  <RecentPostsSkeleton/>
+                  <RecentPostsSkeleton />
                 </div>
               ) : (
                 <RecentPosts posts={posts} />
@@ -153,8 +151,6 @@ const DashboardPage = () => {
 }
 
 export default DashboardPage
-
-
 
 export function RecentPostsSkeleton() {
   return (
@@ -200,17 +196,17 @@ export function RecentPostsSkeleton() {
         </table>
       </div>
     </div>
-  );
+  )
 }
 
-function StatCardsSkeleton(){
-  return(
-  <div className="flex flex-col sm:flex-row justify-start gap-4 sm:gap-6 md:gap-10 bg-[#F0F1FA] h-fit py-4 px-2 rounded-md mt-6">
-  <StatCardSkeleton />
-  <StatCardSkeleton />
-  <StatCardSkeleton />
-  <StatCardSkeleton />
-</div>
+function StatCardsSkeleton() {
+  return (
+    <div className="flex flex-col sm:flex-row justify-start gap-4 sm:gap-6 md:gap-10 bg-[#F0F1FA] h-fit py-4 px-2 rounded-md mt-6">
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+      <StatCardSkeleton />
+    </div>
   )
 }
 
