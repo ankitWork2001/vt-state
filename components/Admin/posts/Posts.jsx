@@ -40,6 +40,7 @@ const Posts = ({ setActiveTab }) => {
   const handleBackToList = () => {
     setSelectedPost(null)
   }
+  
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -207,7 +208,8 @@ const Posts = ({ setActiveTab }) => {
         onPostSuccess={handlePostUpdate}
         onCancelEdit={() => setEditingPostId(null)}
         setActiveTab={setActiveTab}
-      />
+        onBack={() => setEditingPostId(null)}
+              />
     )
   }
 
