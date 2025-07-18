@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { use, useEffect, useState } from "react"
 import { Heart, MessageCircle, Bookmark } from "lucide-react"
 import Image from "next/image"
 import { axiosInstance } from "@/lib/axios"
@@ -9,7 +9,7 @@ const PostDetail = ({ post, onBack }) => {
   const [comments, setComments] = useState([])
   const [analytics, setAnalytics] = useState([])
   const [showFullContent, setShowFullContent] = useState(false)
-
+  
   useEffect(() => {
     const fetchDetails = async () => {
       const token = localStorage.getItem("token")
@@ -50,14 +50,24 @@ const PostDetail = ({ post, onBack }) => {
 
       <h2 className="text-2xl font-semibold text-[#1F3C5F] mb-4">Performance Overview</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <Card title="Views" value={analytics.views || 0} sub="28 more than usual" />
-        <Card
-          title="Time Spent (hours)"
-          value={((analytics.avgReadTime ?? 84) / 60).toFixed(2)}
-          sub="24% more than previous 28 days"
-        />
-      </div>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+  <Card
+    title="Views"
+    value={analytics?.views ?? 'Loading...'}
+    // sub="28 more than usual"
+  />
+
+  <Card
+    title="Time Spent (hours)"
+    value={
+      analytics?.avgReadTime != null
+        ? (analytics.avgReadTime / 60).toFixed(2)
+        : 'Loading...'
+    }
+    // sub="24% more than previous 28 days"
+  />
+</div>
+
 
       <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2">{fullPost.title}</h2>
       <p className="text-center text-sm text-gray-500 mb-4">
@@ -118,10 +128,10 @@ const PostDetail = ({ post, onBack }) => {
 }
 
 const Card = ({ title, value, sub }) => (
-  <div className="border p-4 rounded-md bg-gray-50 h-[150px] shadow-sm">
+  <div className="border p-4 rounded-md bg-gray-50 h-[100px] shadow-sm">
     <p className="text-sm text-gray-600 font-medium">{title}</p>
     <p className="text-2xl font-bold text-[#1F3C5F] mt-1">{value}</p>
-    {sub && <p className="text-sm text-gray-500 mt-2">{sub}</p>}
+    {/* {sub && <p className="text-sm text-gray-500 mt-2">{sub}</p>} */}
   </div>
 )
 

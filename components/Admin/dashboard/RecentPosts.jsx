@@ -1,8 +1,8 @@
 "use client"
 import { useState } from "react"
-import { Pencil, Trash2, Eye } from "lucide-react"
+import {  Trash2, Eye } from "lucide-react"
 import PostDetails from "@/components/Admin/posts/PostDetail"
-import PostForm from "@/components/Admin/addPost/PostForm"
+
 import { axiosInstance } from "@/lib/axios"
 import {
   Dialog,
@@ -28,9 +28,6 @@ const RecentPosts = ({ posts = [], onUpdate = () => {}, onDelete = () => {} }) =
     setSelectedPost(post)
   }
 
-  const handleEdit = (id) => {
-    setEditingPostId(id)
-  }
 
   const handleDeleteClick = (id) => {
     setPostToDeleteId(id)
@@ -57,20 +54,13 @@ const RecentPosts = ({ posts = [], onUpdate = () => {}, onDelete = () => {} }) =
     }
   }
 
-  const handlePostUpdate = (updatedPost) => {
-    onUpdate(updatedPost)
-    setEditingPostId(null)
-  }
+ 
 
   if (selectedPost) {
     return <PostDetails post={selectedPost} onBack={() => setSelectedPost(null)} />
   }
 
-  if (editingPostId) {
-    return (
-      <PostForm postId={editingPostId} onPostSuccess={handlePostUpdate} onCancelEdit={() => setEditingPostId(null)} />
-    )
-  }
+ 
 
   return (
     <div className="bg-white shadow-md rounded-md overflow-hidden mt-6 w-full">
@@ -106,12 +96,7 @@ const RecentPosts = ({ posts = [], onUpdate = () => {}, onDelete = () => {} }) =
                     >
                       <Eye size={18} />
                     </button>
-                    <button
-                      onClick={() => handleEdit(post.id || post._id)}
-                      className="text-green-600 hover:text-green-800"
-                    >
-                      <Pencil size={18} />
-                    </button>
+                   
                     <button
                       onClick={() => handleDeleteClick(post.id || post._id)}
                       className="text-red-600 hover:text-red-800"
