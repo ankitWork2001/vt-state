@@ -110,13 +110,17 @@ export default function Navbar() {
             onClick={toggleProfileMenu}
             className="ml-5 flex items-center space-x-2 p-1 m-2 mb-3 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <Image
-              src={user.profilePic || "/placeholder.svg?height=40&width=40"}
-              alt={user.username}
-              width={40}
-              height={40}
-              className="rounded-full object-cover border-2 border-gray-200 hidden lg:flex"
-            />
+<div className="hidden lg:flex w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 relative">
+  <Image
+    src={user.profilePic || "/placeholder.svg"}
+    alt={user.username}
+    fill
+    className="object-cover"
+    sizes="40px"
+  />
+</div>
+
+
           </button>
           {isProfileMenuOpen && (
             <MobileMenuProfile
@@ -192,23 +196,30 @@ function MobileMenuProfile({ user, handleProfile, handleSignOut }) {
 
 function MobileMenu({ user, verifyAdmin, handleProfile, handleSignIn, handleSignOut }) {
   return (
-    <div className="lg:hidden absolute top-full left-0 right-0 bg-white border-b border-gray-200 shadow-lg">
+    <div className="lg:hidden absolute top-full left-0 right-0 bg-white  border-gray-200 shadow-lg">
       <div className="flex flex-col space-y-1 p-4">
         <Link href="/" className="text-[#1F3C5F] hover:text-[#FF914D] font-medium py-3 px-2 border-b">Home</Link>
         <Link href="/blog-listings" className="text-[#1F3C5F] hover:text-[#FF914D] font-medium py-3 px-2 border-b">Blog List</Link>
         <Link href="/about" className="text-[#1F3C5F] hover:text-[#FF914D] font-medium py-3 px-2 border-b">About</Link>
-        <Link href="/contact" className="text-[#1F3C5F] hover:text-[#FF914D] font-medium py-3 px-2 border-b">Contact</Link>
+        <Link href="/contact" className="text-[#1F3C5F] hover:text-[#FF914D] font-medium py-3 px-2">Contact</Link>
 
         {user && verifyAdmin === false ? (
           <div className="pt-2 border-t border-gray-200 mt-2">
             <div className="flex items-center space-x-3 px-2 py-3">
-              <Image
-                src={user.profilePic || "/placeholder.svg?height=40&width=40"}
-                alt={user.username}
-                width={40}
-                height={40}
-                className="rounded-full object-cover border-2 border-gray-200"
-              />
+            <Image
+          src={user.profilePic || "/placeholder.svg"}
+          alt={user.username}
+          width={40}
+          height={40}
+          style={{
+            width: "40px",
+            height: "40px",
+            borderRadius: "50%",
+            objectFit: "cover",
+            border: "2px solid #e5e7eb" 
+          }}
+/>
+
               <div>
                 <p className="text-sm font-medium">{user.username}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
