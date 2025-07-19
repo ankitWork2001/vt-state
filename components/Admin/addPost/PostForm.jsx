@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-
 import {
   Select,
   SelectContent,
@@ -34,8 +33,7 @@ const PostForm = ({
   onCancelEdit = () => {},
   setActiveTab,
   onBack,
-  }) => {
-
+}) => {
   const {
     register,
     handleSubmit,
@@ -71,7 +69,7 @@ const PostForm = ({
 
   const lastInitializedPostId = useRef(undefined);
 
- 
+  console.log("tage", tags);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -149,12 +147,23 @@ const PostForm = ({
 
             setTags(
               Array.isArray(blog.tags)
-                ? blog.tags
-                : (blog.tags || "")
-                    .split(",")
-                    .map((tag) => tag.trim())
-                    .filter((tag) => tag.length > 0)
+                ? blog.tags.flatMap((tag) => {
+                    try {
+                      if (
+                        typeof tag === "string" &&
+                        tag.startsWith("[") &&
+                        tag.endsWith("]")
+                      ) {
+                        return JSON.parse(tag); // Parse it as a JSON array
+                      }
+                      return tag;
+                    } catch (e) {
+                      return tag;
+                    }
+                  })
+                : []
             );
+
             setLanguage(blog.language || "English");
             if (blog.thumbnail) {
               setMediaFile(blog.thumbnail);
@@ -255,7 +264,12 @@ const PostForm = ({
   };
 
   const handlePreview = () => {
-    setPreviewData({ ...watch(), mediaFile });
+    setPreviewData({
+      ...watch(),
+      mediaFile,
+      categoryId: selectedCategory,
+      selectedCategory,
+    });
   };
 
   const onSubmit = async (data) => {
@@ -288,6 +302,10 @@ const PostForm = ({
       const formData = new FormData();
       const catObj = categories.find((c) => c.id === selectedCategory);
 
+      const categoryId = previewData.categoryId || previewData.selectedCategory;
+      const categoryName =
+        categories.find((c) => c.id === categoryId)?.name || "N/A";
+
       formData.append("title", data.title || "");
       formData.append("content", data.content || "");
       formData.append("language", language || "");
@@ -303,7 +321,7 @@ const PostForm = ({
       }
 
       if (tags && tags.length > 0) {
-        formData.append("tags", JSON.stringify(tags));
+        formData.append("tags", tags);
       } else {
         formData.append("tags", "[]");
       }
@@ -502,7 +520,6 @@ const PostForm = ({
           &larr; Back to Posts
         </button>
       )}
-     
 
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -717,7 +734,6 @@ function Publish({
           </SelectContent>
         </Select>
       </div>
-
       <div className="mb-4">
         <Label
           htmlFor="tags-input"
@@ -726,19 +742,20 @@ function Publish({
           Tags
         </Label>
         <div className="flex flex-wrap gap-2 mb-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
-            >
-              {tag}
-              <XCircle
-                size={16}
-                className="cursor-pointer hover:text-red-500"
-                onClick={() => removeTag(tag)}
-              />
-            </span>
-          ))}
+          {tags.length > 0 &&
+            tags.map((tag) => (
+              <span
+                key={tag}
+                className="flex items-center gap-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm"
+              >
+                {tag}
+                <XCircle
+                  size={16}
+                  className="cursor-pointer hover:text-red-500"
+                  onClick={() => removeTag(tag)}
+                />
+              </span>
+            ))}
         </div>
         <Input
           id="tags-input"
@@ -912,6 +929,8 @@ function Categories({
 }
 
 function Preview({ previewData, tags, categories }) {
+  console.log({ previewData });
+
   const categoryName =
     categories.find((c) => c.id === previewData.categoryId)?.name || "N/A";
 
