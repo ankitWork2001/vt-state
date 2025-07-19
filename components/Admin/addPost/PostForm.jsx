@@ -9,6 +9,7 @@ import TextEditor from "@/components/Admin/addPost/TextEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast, Toaster } from "react-hot-toast";
 
 
 import {
@@ -20,7 +21,8 @@ import {
 } from "@/components/ui/select";
 import { XCircle } from "lucide-react";
 import DraftsList from "@/components/Admin/addPost/DraftsList";
-import toast from "react-hot-toast";
+
+
 
 const isContentEmpty = (htmlContent) => {
   const div = document.createElement("div");
