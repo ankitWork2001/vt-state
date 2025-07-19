@@ -68,6 +68,8 @@ const PostForm = ({
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const contentWatch = watch("content");
+  console.log({previewData});
+  
 
   const lastInitializedPostId = useRef(undefined);
 
@@ -947,9 +949,9 @@ function Preview({ previewData, tags, categories }) {
 
       {previewData.mediaFile && (
         <img
-          src={imageSrc || "/placeholder.svg"}
+          src={previewData.mediaFile || previewData.mediaFile.name}
           alt="Preview"
-          className="w-full h-64 object-cover rounded-md mb-4"
+          className="w-64 h-64 object-cover rounded-md mb-4 text-center"
         />
       )}
 
