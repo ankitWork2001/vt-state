@@ -3,7 +3,10 @@ import Image from "next/image"
 import Link from "next/link"
 import BlogSkeleton from "./BlogSkeleton"
 
-export default function FilteredBlogs({ blogs, loading = false }) {
+export default function FilteredBlogs({ blogs, loading = false}) {
+
+  console.log(blogs);
+
   if (loading) {
     return (
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-4">

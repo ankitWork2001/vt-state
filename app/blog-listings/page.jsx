@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import FilterTabs from "@/components/BlogListing/FilterTabs"
 import BlogViewControls from "@/components/BlogListing/BlogViewControls"
 import FilteredBlogs from "@/components/BlogListing/FilteredBlogs"
 import NavigationMenu from "@/components/common/NavigationMenu"
 import { axiosInstance } from "@/lib/axios"
+import { Circles } from "react-loader-spinner"
 
 export default function BlogList() {
   const [activeCategory, setActiveCategory] = useState("all")
@@ -16,10 +17,97 @@ export default function BlogList() {
   const [loading, setLoading] = useState(true)
   const [blogsLoading, setBlogsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [reFetching, setRefetching] = useState(false);
 
-  const breadcrumbPath = [{ label: "Home", href: "/" }, { label: "Blog" }]
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  const loader = useRef(null)
 
-  // Fetch categories on component mount
+  const fetchBlogs = useCallback(
+    async (pageNum = 1, isReset = false) => {
+      try {
+        if(pageNum !== 1){
+          setRefetching(true)
+        }
+        if (isReset || pageNum === 1) {
+          setLoading(true)
+        } else {
+          setBlogsLoading(true)
+        }
+
+        let url = `/blogs?page=${pageNum}&limit=5`
+
+        if (activeCategory !== "all") url += `&category=${activeCategory}`
+        if (selectedSubCategory && selectedSubCategory !== "All")
+          url += `&subcategory=${selectedSubCategory}`
+        if (sortBy && sortBy !== "All") url += `&sort=${sortBy}`
+
+        const res = await axiosInstance.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        console.log(res.data.blogs)
+        const newBlogs = res.data.blogs || []
+
+        if (isReset || pageNum === 1) {
+          setBlogs(newBlogs)
+        } else {
+          setBlogs((prev) => {
+            const existingIds = new Set(prev.map((b) => b._id || b.id))
+            const filteredNew = newBlogs.filter((b) => !existingIds.has(b._id || b.id))
+            return [...prev, ...filteredNew]
+          })}
+
+        setHasMore(newBlogs.length > 0)
+      } catch (err) {
+        console.error("Error fetching blogs:", err)
+        setError("Failed to fetch blogs")
+      } finally {
+        setLoading(false)
+        setBlogsLoading(false)
+        setRefetching(false)
+      }
+    },
+    [activeCategory, selectedSubCategory, sortBy, token]
+  )
+
+  useEffect(() => {
+    setPage(1)
+    fetchBlogs(1, true)
+  }, [activeCategory, selectedSubCategory, sortBy, fetchBlogs])
+
+  useEffect(() => {
+    if (page === 1) return
+    fetchBlogs(page)
+  }, [page, fetchBlogs])
+
+  const handleObserver = useCallback(
+    (entries) => {
+      const target = entries[0]
+      if (target.isIntersecting && hasMore && !blogsLoading && !loading) {
+        setPage((prev) => prev + 1)
+      }
+    },
+    [hasMore, blogsLoading, loading]
+  )
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: "20px",
+      threshold: 0,
+    }
+
+    const observer = new IntersectionObserver(handleObserver, options)
+    if (loader.current) observer.observe(loader.current)
+    return () => {
+      if (loader.current) observer.unobserve(loader.current)
+    }
+  }, [handleObserver])
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -39,60 +127,14 @@ export default function BlogList() {
     fetchCategories()
   }, [])
 
-  // Fetch blogs when filters change
-  useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        setBlogsLoading(true)
-
-        const params = new URLSearchParams({
-          page: "1",
-          limit: "10",
-        })
-
-        if (activeCategory && activeCategory !== "all") {
-          params.append("category", activeCategory)
-        }
-
-        if (selectedSubCategory) {
-          params.append("subcategory", selectedSubCategory)
-        }
-
-        // Add sorting parameter if your API supports it
-        if (sortBy) {
-          params.append("sort", sortBy)
-        }
-
-        const response = await axiosInstance.get(`/blogs?${params.toString()}`)
-
-        if (response.data.blogs) {
-          setBlogs(response.data.blogs)
-        }
-      } catch (err) {
-        setError("Failed to fetch blogs")
-        console.log("Error fetching blogs:", err)
-      } finally {
-        setBlogsLoading(false)
-      }
-    }
-
-    // Only fetch blogs if categories are loaded (to avoid unnecessary API calls)
-    if (!loading) {
-      fetchBlogs()
-    }
-  }, [activeCategory, selectedSubCategory, sortBy, loading])
-
-  // Reset subcategory when main category changes
   const handleCategoryChange = (newCategory) => {
     setActiveCategory(newCategory)
     setSelectedSubCategory("") // Reset subcategory when main category changes
   }
 
-  // Sort blogs client-side if needed (in case API doesn't support sorting)
   const sortedBlogs = useMemo(() => {
     if (!blogs || blogs.length === 0) return []
-
-    const sorted = [...blogs].sort((a, b) => {
+    return [...blogs].sort((a, b) => {
       switch (sortBy) {
         case "oldest":
           return new Date(a.createdAt) - new Date(b.createdAt)
@@ -101,14 +143,12 @@ export default function BlogList() {
           return new Date(b.createdAt) - new Date(a.createdAt)
       }
     })
-
-    return sorted
   }, [blogs, sortBy])
 
   if (error) {
     return (
       <div className="bg-white min-h-screen">
-        <NavigationMenu path={breadcrumbPath} />
+        <NavigationMenu path={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 py-8 text-center">
           <p className="text-red-500">Error: {error}</p>
           <button
@@ -124,7 +164,7 @@ export default function BlogList() {
 
   return (
     <div className="bg-white min-h-screen">
-      <NavigationMenu path={breadcrumbPath} />
+      <NavigationMenu path={[{ label: "Home", href: "/" }, { label: "Blog" }]} />
 
       <FilterTabs
         activeCategory={activeCategory}
@@ -138,6 +178,15 @@ export default function BlogList() {
       <BlogViewControls sortBy={sortBy} onSortChange={setSortBy} />
 
       <FilteredBlogs blogs={sortedBlogs} loading={blogsLoading} />
+
+      {/* Loader for infinite scroll */}
+        {reFetching && (
+          <div className="flex justify-center mt-4">
+            <Circles height="40" width="40" color="#1F3C5F" ariaLabel="loading" />
+          </div>
+        )}
+      
+      <div ref={loader} className="flex justify-center items-center py-6"></div>
     </div>
   )
 }
