@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge"
 import Image from "next/image"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
+import DOMPurify from 'isomorphic-dompurify';
+
 
 // Blog skeleton component
 function BlogSkeleton() {
@@ -44,7 +46,7 @@ export default function BlogCard({ blogs, showBorder = true, loading = false }) 
   if (!blogs || blogs.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
-        <p className="text-lg">No blogs found for this category.</p>
+        <p className="text-lg">No  blogs found for this category.</p>
         <p className="text-sm mt-2">Try selecting a different category or check back later.</p>
       </div>
     )
@@ -79,9 +81,15 @@ export default function BlogCard({ blogs, showBorder = true, loading = false }) 
                   <p className="text-xs text-gray-500 mb-2">{blog.publishedDate}</p>
 
                   <p className="text-[#335A8A] text-sm mb-4 line-clamp-3">
-                    {blog.excerpt}
-                    <span className="text-[#335A8A] hover:text-[#1F3C5F] ml-1 font-medium underline">Read more</span>
-                  </p>
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(
+                            `${blog.excerpt || ""} <span class='text-[#335A8A] hover:text-[#1F3C5F] ml-1 font-medium underline'>Read more</span>`
+                          ),
+                        }}
+                      />
+                    </p>
+
 
                   {/* Footer aligned at bottom */}
                   <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">

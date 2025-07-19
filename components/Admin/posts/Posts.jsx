@@ -272,7 +272,7 @@ const Posts = ({ setActiveTab }) => {
                   {post.category?.name || post.categoryId?.name || post.category || "Uncategorized"}
                 </td>
                 <td className="px-6 py-4">
-                  {new Date(post.createdAt || post.date).toLocaleDateString("en-GB", {
+                  {new Date(post.createdAt || post.Date).toLocaleDateString("en-GB", {
                     day: "numeric",
                     month: "short",
                     year: "numeric",
