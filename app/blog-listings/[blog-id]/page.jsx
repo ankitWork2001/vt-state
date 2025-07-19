@@ -211,8 +211,8 @@ const BlogDetails = () => {
     return <NotFound error={error} />;
   }
 
-  if(!blogDetails){
-    return <BlogDetailsSkeleton/>
+  if (!blogDetails) {
+    return <BlogDetailsSkeleton />;
   }
 
   return (
@@ -239,7 +239,10 @@ const BlogDetails = () => {
           <CommentSection commentsDetails={commentsDetails} refetchComments={fetchComments} />
         </div>
         <div className="w-full sm:w-[30%] mx-auto">
-          <RelatedArticleCard />
+          <RelatedArticleCard
+            categoryId={blogDetails?.categoryId?._id}
+            subcategoryId={blogDetails?.subcategoryId?._id}
+          />
         </div>
       </div>
     </div>
@@ -257,12 +260,12 @@ const NotFound = ({ error }) => {
   );
 };
 
-
-function BlogDetailsSkeleton(){
-  return(<>
-        <div className="mx-auto flex w-[95%] flex-col sm:flex-row">
+function BlogDetailsSkeleton() {
+  return (
+    <>
+      <div className="mx-auto flex w-[95%] flex-col sm:flex-row">
         <div className="p-1 mx-auto w-full max-w-4xl flex flex-col gap-4">
-        <div className="min-w-60 h-auto w-full max-w-full flex justify-center items-center flex-col">
+          <div className="min-w-60 h-auto w-full max-w-full flex justify-center items-center flex-col">
             <Skeleton className="w-20 h-20 rounded-full my-2" />
             <Skeleton className="h-4 w-32 mt-2" />
             <Skeleton className="h-3 w-40 mt-1" />
@@ -306,5 +309,6 @@ function BlogDetailsSkeleton(){
           </div>
         </div>
       </div>
-  </>)
+    </>
+  );
 }

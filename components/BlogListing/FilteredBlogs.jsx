@@ -2,6 +2,7 @@ import { Bookmark } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import BlogSkeleton from "./BlogSkeleton"
+import DOMPurify from 'isomorphic-dompurify';
 
 export default function FilteredBlogs({ blogs, loading = false}) {
 
@@ -73,24 +74,31 @@ export default function FilteredBlogs({ blogs, loading = false}) {
 
                   {/* content */}
                   <div className="text-[#060606] text-sm sm:text-base mb-3 leading-relaxed">
-                    {blog.content || blog.description ? (
-                      <>
-                        {blog.content && blog.content.length > 300 ? (
-                          <>
-                            {truncateText(blog.content, 300)}...{" "}
-                            <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
-                          </>
-                        ) : (
-                          <>
-                            {blog.content || blog.description}{" "}
-                            <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
-                    )}
-                  </div>
+   {blog.content || blog.description ? (
+    <>
+            {blog.content && blog.content.length > 300 ? (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(
+                    `${truncateText(blog.content, 300)}... <span class='text-[#060606] hover:text-[#1F3C5F] font-medium underline'>Read more</span>`
+                  ),
+                }}
+              />
+            ) : (
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(
+                    `${blog.content || blog.description} <span class='text-[#060606] hover:text-[#1F3C5F] font-medium underline'>Read more</span>`
+                  ),
+                }}
+              />
+            )}
+    </>
+  ) : (
+    <span className="text-[#060606] hover:text-[#1F3C5F] font-medium underline">Read more</span>
+  )}
+</div>
+
 
                   {/* Author & Meta */}
                   <div className="flex flex-col">
