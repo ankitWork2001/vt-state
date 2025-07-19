@@ -47,7 +47,7 @@ export default function CategoryCard() {
         setLoading(true)
         const response = await axiosInstance.get("/categories")
         if (response.data.success && response.data.data) {
-          setCategories(response.data.data)
+          setCategories(response.data.data.slice(0, 4))
         }
       } catch (err) {
         setError("Failed to fetch categories")
