@@ -16,8 +16,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast ,Toaster } from "react-hot-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Posts = ({ setActiveTab }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,7 +41,8 @@ const Posts = ({ setActiveTab }) => {
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const loader = useRef(null);
 
@@ -46,8 +53,10 @@ const Posts = ({ setActiveTab }) => {
 
         let url = `/analytics/blogs?page=${pageNum}&limit=5`;
 
-        if (selectedCategoryId !== "All") url += `&category=${selectedCategoryId}`;
-        if (selectedSubcategoryId !== "All") url += `&subcategory=${selectedSubcategoryId}`;
+        if (selectedCategoryId !== "All")
+          url += `&category=${selectedCategoryId}`;
+        if (selectedSubcategoryId !== "All")
+          url += `&subcategory=${selectedSubcategoryId}`;
         if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
 
         const res = await axiosInstance.get(url, {
@@ -174,7 +183,9 @@ const Posts = ({ setActiveTab }) => {
       await axiosInstance.delete(`/blogs/${postToDeleteId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setBlogs((prev) => prev.filter((post) => (post.id || post._id) !== postToDeleteId));
+      setBlogs((prev) =>
+        prev.filter((post) => (post.id || post._id) !== postToDeleteId)
+      );
       toast.success("Post deleted successfully!");
     } catch (err) {
       console.error("Failed to delete post:", err);
@@ -210,7 +221,8 @@ const Posts = ({ setActiveTab }) => {
   }
   console.log(blogs)
 
-  return (
+  return (<>
+    <Toaster />
     <div className="bg-gray-50 shadow rounded-xl p-6">
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 mt-8">
@@ -221,7 +233,10 @@ const Posts = ({ setActiveTab }) => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border border-gray-300 rounded-lg px-4 py-2 w-full md:w-1/2 focus:outline-none focus:ring-2 focus:ring-[#1F3C5F]"
         />
-        <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+        <Select
+          value={selectedCategoryId}
+          onValueChange={setSelectedCategoryId}
+        >
           <SelectTrigger className="w-full md:w-1/4">
             <SelectValue placeholder="Select Category" />
           </SelectTrigger>
@@ -249,7 +264,7 @@ const Posts = ({ setActiveTab }) => {
                 {sub.name}
               </SelectItem>
             ))}
-            </SelectContent>
+          </SelectContent>
         </Select>
       </div>
 
@@ -267,35 +282,49 @@ const Posts = ({ setActiveTab }) => {
           </thead>
           <tbody className="text-gray-700">
             {displayedPosts.map((post) => (
-              <tr key={post._id} className="border-t border-gray-200 hover:bg-gray-100 text-[16px]">
+              <tr
+                key={post._id}
+                className="border-t border-gray-200 hover:bg-gray-100 text-[16px]"
+              >
                 <td className="px-6 py-4 font-medium">{post.title}</td>
                 <td className="px-6 py-4">
-                  {post.category?.name || post.categoryId?.name || post.category || "Uncategorized"}
+                  {post.category?.name ||
+                    post.categoryId?.name ||
+                    post.category ||
+                    "Uncategorized"}
                 </td>
                 <td className="px-6 py-4">
-                  {new Date(post.createdAt || post.Date).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
+                  {new Date(post.createdAt || post.Date).toLocaleDateString(
+                    "en-GB",
+                    {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    }
+                  )}
                 </td>
                 <td className="px-6 py-4">
-                  {post.views !== undefined && post.views !== null ? post.views : 0}
+                  {post.views !== undefined && post.views !== null
+                    ? post.views
+                    : 0}
                 </td>
                 <td className="px-6 py-4 flex gap-3 items-center">
-                  <button onClick={() => handleView(post.id || post._id)} className="text-blue-600 hover:text-blue-800">
+                  <button
+                    onClick={() => handleView(post.id || post._id)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
                     <Eye size={18} />
                   </button>
                   <button
                     onClick={() => handleEdit(post.id || post._id)}
                     className="text-green-600 hover:text-green-800"
-                  >
+                    >
                     <Pencil size={18} />
                   </button>
                   <button
                     onClick={() => handleDeleteClick(post.id || post._id)}
                     className="text-red-600 hover:text-red-800"
-                  >
+                    >
                     <Trash2 size={18} />
                   </button>
                 </td>
@@ -315,7 +344,9 @@ const Posts = ({ setActiveTab }) => {
         </div>
       )}
       {!hasMore && !loading && blogs.length > 0 && (
-        <div className="text-center p-4 text-gray-400">No more posts to load.</div>
+        <div className="text-center p-4 text-gray-400">
+          No more posts to load.
+        </div>
       )}
 
       {/* Infinite scroll anchor */}
@@ -332,16 +363,23 @@ const Posts = ({ setActiveTab }) => {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+      <Dialog
+        open={showDeleteConfirmDialog}
+        onOpenChange={setShowDeleteConfirmDialog}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this post? This action cannot be undone.
+              Are you sure you want to delete this post? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirmDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirmDialog(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
@@ -351,6 +389,7 @@ const Posts = ({ setActiveTab }) => {
         </DialogContent>
       </Dialog>
     </div>
+</>
   );
 };
 
