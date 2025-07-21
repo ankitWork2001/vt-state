@@ -21,22 +21,11 @@ function AuthorProfile({ author, comments = 0, bookmarks = 0, likes = 0, likedBy
   const [hideComment, setHideComment] = useState(false);
 
   useEffect(() => {
-    console.log('axiosInstance:', axiosInstance);
-    console.log('blogid:', blogid);
-    console.log('Props:', { likedByUser, bookmarkedByUser, likes, bookmarks, isValidUser });
-
     const verifyUser = async () => {
       const token = localStorage.getItem('token');
       const localUser = JSON.parse(localStorage.getItem('user') || '{}');
 
       if (!token || !localUser.userid) {
-        setIsValidUser(false);
-        setIsLoading(false);
-        return;
-      }
-
-      if (!axiosInstance || typeof axiosInstance.get !== 'function') {
-        console.error('axiosInstance is not properly initialized:', axiosInstance);
         setIsValidUser(false);
         setIsLoading(false);
         return;
@@ -70,7 +59,6 @@ function AuthorProfile({ author, comments = 0, bookmarks = 0, likes = 0, likedBy
 
   // Sync states with props
   useEffect(() => {
-    console.log('Updating states with props:', { likedByUser, bookmarkedByUser, likes, bookmarks });
     setLike(likedByUser);
     setBookmark(bookmarkedByUser);
     setLikeCount(likes);
@@ -78,22 +66,15 @@ function AuthorProfile({ author, comments = 0, bookmarks = 0, likes = 0, likedBy
   }, [likedByUser, bookmarkedByUser, likes, bookmarks]);
 
   const handleLike = async () => {
-    if (!isValidUser) {
-      setHideComment(true);
-      return;
-    }
-
-    if (!blogid) {
-      console.error('Cannot like: blogid is undefined');
+    if (!isValidUser || !blogid) {
       setHideComment(true);
       return;
     }
 
     const prevLikeState = like;
-    const prevLikeCount = likeCount;
-    setLike(!prevLikeState); // Optimistic update
-    setLikeCount(prevLikeState ? prevLikeCount - 1 : prevLikeCount + 1);
-    console.log('handleLike triggered:', { prevLikeState, prevLikeCount, newLikeState: !prevLikeState });
+    const newLikeState = !prevLikeState;
+    setLike(newLikeState);
+    setLikeCount(prevCount => newLikeState ? prevCount + 1 : prevCount - 1);
 
     try {
       await axiosInstance.post(
@@ -105,39 +86,24 @@ function AuthorProfile({ author, comments = 0, bookmarks = 0, likes = 0, likedBy
           },
         }
       );
-      // Refetch to sync with backend
-      const res = await axiosInstance.get(`/blogs/${blogid}`, {
-        headers: {
-          Authorization: `Bearer ${user.token || localStorage.getItem('token')}`,
-        },
-      });
-      console.log('Refetched blog after like:', res.data);
-      setLike(res.data.blog.likes?.some(like => like._id === user.userid) || false);
-      setLikeCount(res.data.blog.likes?.length || 0);
     } catch (e) {
       console.error('Like error:', e?.response?.data?.message || e.message);
+      // Revert UI on error
       setLike(prevLikeState);
-      setLikeCount(prevLikeCount);
+      setLikeCount(prevCount => newLikeState ? prevCount - 1 : prevCount + 1);
     }
   };
 
   const handleBookmark = async () => {
-    if (!isValidUser) {
-      setHideComment(true);
-      return;
-    }
-
-    if (!blogid) {
-      console.error('Cannot bookmark: blogid is undefined');
+    if (!isValidUser || !blogid) {
       setHideComment(true);
       return;
     }
 
     const prevBookmarkState = bookmark;
-    const prevBookmarkCount = bookmarkCount;
-    setBookmark(!prevBookmarkState);
-    setBookmarkCount(prevBookmarkState ? prevBookmarkCount - 1 : prevBookmarkCount + 1);
-    console.log('handleBookmark triggered:', { prevBookmarkState, prevBookmarkCount, newBookmarkState: !prevBookmarkState });
+    const newBookmarkState = !prevBookmarkState;
+    setBookmark(newBookmarkState);
+    setBookmarkCount(prevCount => newBookmarkState ? prevCount + 1 : prevCount - 1);
 
     try {
       await axiosInstance.post(
@@ -149,29 +115,19 @@ function AuthorProfile({ author, comments = 0, bookmarks = 0, likes = 0, likedBy
           },
         }
       );
-      // Refetch to sync with backend
-      const res = await axiosInstance.get(`/blogs/${blogid}`, {
-        headers: {
-          Authorization: `Bearer ${user.token || localStorage.getItem('token')}`,
-        },
-      });
-      console.log('Refetched blog after bookmark:', res.data);
-      setBookmark(res.data.blog.bookmarks?.some(bookmark => bookmark._id === user.userid) || false);
-      setBookmarkCount(res.data.blog.bookmarks?.length || 0);
     } catch (e) {
       console.error('Bookmark error:', e?.response?.data?.message || e.message);
+      // Revert UI on error
       setBookmark(prevBookmarkState);
-      setBookmarkCount(prevBookmarkCount);
+      setBookmarkCount(prevCount => newBookmarkState ? prevCount - 1 : prevCount + 1);
     }
   };
+
 
   const handleComment = () => {
     const commentSection = document.getElementById('comment-section');
     if (commentSection) {
       commentSection.scrollIntoView({ behavior: 'smooth' });
-      console.log('Scrolled to comment-section');
-    } else {
-      console.error('Comment section not found');
     }
   };
 

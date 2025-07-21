@@ -1,49 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Trash2 } from 'lucide-react';
 import { formatDate } from '@/lib/formatDate';
 import { axiosInstance } from '@/lib/axios';
 import { toast } from 'react-hot-toast';
 
 function CommentCard({ comment, refetchComments }) {
-  const [isOwner, setIsOwner] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const verifyUser = async () => {
-      const token = localStorage.getItem('token');
-      const localUser = JSON.parse(localStorage.getItem('user') || '{}');
-
-      if (!token || !localUser.userid) {
-        setIsOwner(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const { data } = await axiosInstance.get('/auth/verify-token', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const serverUser = data.user;
-        if (localUser.userid === serverUser.userId && !serverUser.isAdmin && localUser.userid === comment.userId._id) {
-          setIsOwner(true);
-        } else {
-          setIsOwner(false);
-        }
-      } catch (err) {
-        console.error('Token validation failed:', err.message);
-        setIsOwner(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    verifyUser();
-  }, [comment.userId._id]);
+  const localUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isOwner = useMemo(() => {
+    return localUser.userid && !localUser.isAdmin && localUser.userid === comment.userId._id;
+  }, [localUser.userid, comment.userId._id]);
 
   const handleDelete = async () => {
     if (!isOwner) {
@@ -59,16 +26,12 @@ function CommentCard({ comment, refetchComments }) {
         },
       });
       toast.success('Comment deleted successfully!');
-      refetchComments();
+      refetchComments(1, true); // Reset to page 1 on deletion
     } catch (err) {
       console.error('Delete comment error:', err?.response?.data?.message || err.message);
       toast.error('Failed to delete comment. Please try again.');
     }
   };
-
-  if (isLoading) {
-    return <div className="text-center text-gray-600">Loading...</div>;
-  }
 
   return (
     <div className="p-1 m-1 my-3 min-w-fit h-auto w-full flex justify-start flex-col border-1 border-slate-700">
