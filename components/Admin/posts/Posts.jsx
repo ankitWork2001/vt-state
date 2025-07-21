@@ -227,7 +227,7 @@ const Posts = ({ setActiveTab }) => {
 
   return (
     <>
-      <Toaster />
+      
       <div className="bg-gray-50 shadow rounded-xl p-6">
         {/* Filters */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 mt-8">
