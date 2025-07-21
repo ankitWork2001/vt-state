@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { useForm } from "react-hook-form";
 import { axiosInstance } from "@/lib/axios";
 import MediaUpload from "@/components/Admin/addPost/MediaUpload";
@@ -20,8 +20,6 @@ import {
 } from "@/components/ui/select";
 import { XCircle } from "lucide-react";
 import DraftsList from "@/components/Admin/addPost/DraftsList";
-
-
 
 const isContentEmpty = (htmlContent) => {
   const div = document.createElement("div");
@@ -64,16 +62,13 @@ const PostForm = ({
   const [savingDraft, setSavingDraft] = useState(false);
   const [showDraftsList, setShowDraftsList] = useState(false);
   const [allDrafts, setAllDrafts] = useState([]);
+  const [urlNewMedia, setUrlNewMedia] = useState(null);
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   const contentWatch = watch("content");
-  console.log({previewData});
-  
 
   const lastInitializedPostId = useRef(undefined);
-
-  console.log("tage", tags);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -114,7 +109,6 @@ const PostForm = ({
     if (!isReadyToInitialize) return;
 
     if (postId && hasPostIdChanged) {
-      console.log("Initializing for edit mode:", postId);
       const fetchPost = async () => {
         setLoading(true);
         try {
@@ -189,7 +183,6 @@ const PostForm = ({
       isNewPostModeAndUninitialized ||
       (!postId && lastInitializedPostId.current === undefined)
     ) {
-      console.log("Initializing for new post mode.");
       reset();
       setValue("content", "");
       setValue("id", null);
@@ -206,9 +199,14 @@ const PostForm = ({
 
   useEffect(() => {
     let urlToRevoke = null;
+
     if (mediaFile instanceof File) {
+      // Create a blob URL for the selected file
       urlToRevoke = URL.createObjectURL(mediaFile);
+      setUrlNewMedia(urlToRevoke); // Set the created URL to state
     }
+
+    // Cleanup function to revoke the blob URL when component unmounts or mediaFile changes
     return () => {
       if (urlToRevoke) {
         URL.revokeObjectURL(urlToRevoke);
@@ -353,7 +351,6 @@ const PostForm = ({
         toast.success("Post published successfully!");
       }
 
-      console.log("Post submitted/updated:", res.data);
       onPostSuccess(res.data.blog || res.data.data);
 
       reset({
@@ -653,6 +650,7 @@ const PostForm = ({
           previewData={previewData}
           tags={tags}
           categories={categories}
+          urlNewMedia={urlNewMedia}
         />
       )}
     </>
@@ -932,24 +930,30 @@ function Categories({
   );
 }
 
-function Preview({ previewData, tags, categories }) {
-  console.log({ previewData });
+function Preview({ previewData, tags, categories, urlNewMedia }) {
+  const [imageSrc, setImageSrc] = useState("/placeholder.svg");
+
+  useEffect(() => {
+    if (urlNewMedia) {
+      setImageSrc(urlNewMedia);
+    } else if (previewData.mediaFile) {
+      console.log("🖼 Using previewData.mediaFile:", previewData.mediaFile);
+      setImageSrc(previewData.mediaFile);
+    } else {
+      setImageSrc("/placeholder.svg");
+    }
+  }, [previewData.mediaFile, urlNewMedia]);
 
   const categoryName =
     categories.find((c) => c.id === previewData.categoryId)?.name || "N/A";
-
-  const imageSrc =
-    previewData.mediaFile instanceof File
-      ? URL.createObjectURL(previewData.mediaFile)
-      : "/placeholder.svg";
 
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-md p-6 shadow-sm border">
       <h2 className="text-2xl font-bold mb-4">{previewData.title}</h2>
 
-      {previewData.mediaFile && (
+      {(urlNewMedia || previewData.mediaFile) && (
         <img
-          src={previewData.mediaFile || previewData.mediaFile.name}
+          src={imageSrc}
           alt="Preview"
           className="w-64 h-64 object-cover rounded-md mb-4 text-center"
         />
