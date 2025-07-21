@@ -1,69 +1,48 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { axiosInstance } from "@/lib/axios";
-import { toast } from "react-hot-toast";
+import { axiosInstance } from '@/lib/axios';
+import { toast } from 'react-hot-toast';
 
-function CommentForm({ refetchComments }) {
+function CommentForm({ handleNewComment }) {
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidUser, setIsValidUser] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { 'blog-id': blogId } = useParams();
+  const localUser = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
-    const verifyUser = async () => {
-      const token = localStorage.getItem("token");
-      const localUser = JSON.parse(localStorage.getItem("user") || "{}");
-
-      if (!token || !localUser.userid) {
+    const validateUser = () => {
+      const token = localStorage.getItem('token');
+      if (!token || !localUser.userid || localUser.isAdmin) {
         setIsValidUser(false);
-        setIsLoading(false);
-        return;
+      } else {
+        setIsValidUser(true);
       }
-
-      try {
-        const { data } = await axiosInstance.get("/auth/verify-token", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const serverUser = data.user;
-
-        if (localUser.userid === serverUser.userId && !serverUser.isAdmin) {
-          setIsValidUser(true);
-        } else {
-          setIsValidUser(false);
-        }
-      } catch (err) {
-        console.error("Token validation failed:", err.message);
-        setIsValidUser(false);
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     };
 
-    verifyUser();
+    validateUser();
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!comment.trim()) {
-      toast.error("Comment cannot be empty.");
+      toast.error('Comment cannot be empty.');
       return;
     }
 
     if (!blogId) {
-      toast.error("Invalid blog ID.");
+      toast.error('Invalid blog ID.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem("token");
-      await axiosInstance.post(
+      const token = localStorage.getItem('token');
+      const response = await axiosInstance.post(
         `/comments/${blogId}`,
         { comment },
         {
@@ -72,13 +51,24 @@ function CommentForm({ refetchComments }) {
           },
         }
       );
-      toast.success("Comment posted successfully!");
+
+      const newComment = {
+        _id: response.data.commentId, // Use commentId from API response
+        comment: comment,
+        userId: {
+          _id: localUser.userid,
+          username: localUser.username,
+          profilePic: localUser.profilePic,
+        },
+        createdAt: new Date().toISOString(),
+      };
+
+      toast.success('Comment posted successfully!');
       setComment('');
-      console.log('Comment submitted, refetching comments');
-      refetchComments(); // Trigger comment list update
+      handleNewComment(newComment);
     } catch (err) {
-      console.error("Failed to post comment:", err.message);
-      toast.error("Failed to post comment. Please try again.");
+      console.error('Failed to post comment:', err?.response?.data?.message || err.message);
+      toast.error('Failed to post comment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
