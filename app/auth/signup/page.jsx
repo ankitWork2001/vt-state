@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { toast } from "react-hot-toast"
 import { axiosInstance } from "@/lib/axios"
-import OtpInput from "@/components/auth/OtpInput"
+import OtpInput from "@/components/Auth/OtpInput"
 
 export default function SignupPage() {
   const [step, setStep] = useState("signup")

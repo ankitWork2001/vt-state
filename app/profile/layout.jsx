@@ -1,5 +1,5 @@
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
-import ProfileHeader from '@/components/profile/ProfileHeader';
+
 
 export default function ProfileLayout({ children }) {
   return (
