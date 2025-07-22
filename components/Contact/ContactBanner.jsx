@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import React from 'react';
-import Phone from '../../public/Phone.png';
 
 function ContactBanner() {
   return (
@@ -9,7 +8,7 @@ function ContactBanner() {
         Contact Us
       </h1>
       <Image 
-        src={Phone}
+        src='/Phone.png'
         alt="Contact phone icon"
         className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
         width={96}
