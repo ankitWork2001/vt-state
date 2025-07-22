@@ -8,7 +8,7 @@ function ContactBanner() {
         Contact Us
       </h1>
       <Image 
-        src='/Phone.png'
+        src='/images/Phone.png'
         alt="Contact phone icon"
         className="w-20 h-20 sm:w-24 sm:h-24 object-contain"
         width={96}
