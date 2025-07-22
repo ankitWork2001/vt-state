@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react"
 import { toast } from "react-hot-toast"
 import { axiosInstance } from "@/lib/axios"
-import ProfileHeader from "@/components/profile/ProfileHeader"
-import ArticleList from "@/components/profile/ArticleList"
+import ProfileHeader from "@/components/Profile/ProfileHeader"
+import ArticleList from "@/components/Profile/ArticleList"
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
