@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { axiosInstance } from "@/lib/axios";
 import MediaUpload from "@/components/Admin/addPost/MediaUpload";
@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast, Toaster } from "react-hot-toast";
-
 import {
   Select,
   SelectContent,
@@ -70,16 +69,19 @@ const PostForm = ({
 
   const lastInitializedPostId = useRef(undefined);
 
+  // Function to fetch categories
+  const fetchCategories = async () => {
+    try {
+      const res = await axiosInstance.get("/categories");
+      setCategories(res.data.data);
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+      toast.error("Failed to fetch categories.");
+    }
+  };
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await axiosInstance.get("/categories");
-        setCategories(res.data.data);
-      } catch (error) {
-        console.error("Failed to fetch categories", error);
-      }
-    };
-    fetchCategories();
+    fetchCategories(); // Initial fetch
   }, []);
 
   useEffect(() => {
@@ -294,43 +296,47 @@ const PostForm = ({
       isValid = false;
     }
 
+    if (!selectedCategory) {
+      toast.error("Please select a category.");
+      isValid = false;
+    }
+
     if (!isValid) {
       return;
     }
 
     setLoading(true);
     try {
-      handlePreview();
+      // Log form data for debugging
+      console.log("Submitting with data:", {
+        title: data.title,
+        content: data.content,
+        categoryId: selectedCategory,
+        subcategoryId: selectedSubCategory,
+        tags,
+        language,
+        hasThumbnail: !!mediaFile,
+      });
+
       const formData = new FormData();
-      const catObj = categories.find((c) => c.id === selectedCategory);
-
-      const categoryId = previewData.categoryId || previewData.selectedCategory;
-      const categoryName =
-        categories.find((c) => c.id === categoryId)?.name || "N/A";
-
       formData.append("title", data.title || "");
       formData.append("content", data.content || "");
       formData.append("language", language || "");
-
-      if (catObj?.id) {
-        formData.append("categoryId", catObj.id);
-      } else {
-        formData.append("categoryId", selectedCategory || "");
-      }
-
+      formData.append("categoryId", selectedCategory || "");
+      
       if (selectedSubCategory) {
         formData.append("subcategoryId", selectedSubCategory);
       }
 
-      if (tags && tags.length > 0) {
-        formData.append("tags", tags);
-      } else {
-        formData.append("tags", "[]");
-      }
+      // Stringify tags to ensure backend compatibility
+      formData.append("tags", JSON.stringify(tags || []));
 
       if (mediaFile instanceof File) {
         formData.append("thumbnail", mediaFile);
       }
+
+      // Log FormData contents
+      console.log("FormData contents:", Object.fromEntries(formData));
 
       let res;
       if (postId) {
@@ -373,8 +379,14 @@ const PostForm = ({
         deleteDraft(currentDraftId);
       }
     } catch (error) {
-      console.error("Error publishing/updating post:", error);
-      toast.error("Failed to publish/update post.");
+      console.error("Error publishing/updating post:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      toast.error(
+        error.response?.data?.message || "Failed to publish/update post."
+      );
     } finally {
       setLoading(false);
     }
@@ -458,10 +470,15 @@ const PostForm = ({
         }
       );
 
-      setCategories((prev) => [...prev, res.data.data]);
       setNewCategory("");
       setShowCatInput(false);
       toast.success("Category added successfully!");
+
+      // Refetch categories to ensure IDs are up-to-date
+      await fetchCategories();
+
+      // Set the newly added category as selected
+      setSelectedCategory(res.data.data.id);
     } catch (error) {
       console.error("Failed to add category", error);
       toast.error("Failed to add category.");
@@ -490,20 +507,15 @@ const PostForm = ({
 
       const newSub = res.data.data;
 
-      setSubCategories((prev) => [...prev, newSub]);
       setNewSubcategory("");
       setShowSubInput(false);
 
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === selectedCategory
-            ? {
-                ...cat,
-                subcategories: [...(cat.subcategories || []), newSub],
-              }
-            : cat
-        )
-      );
+      // Refetch categories to ensure the subcategory is included
+      await fetchCategories();
+
+      // Set the newly added subcategory as selected
+      setSelectedSubCategory(newSub.id);
+
       toast.success("Subcategory added successfully!");
     } catch (error) {
       console.error("Failed to add subcategory", error);
