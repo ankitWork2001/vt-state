@@ -3,7 +3,7 @@
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import Underline from "@tiptap/extension-underline"
-import TextStyle from "@tiptap/extension-text-style"
+import {TextStyle} from "@tiptap/extension-text-style"
 import Link from "@tiptap/extension-link"
 import Highlight from "@tiptap/extension-highlight"
 import { Extension } from "@tiptap/core"
